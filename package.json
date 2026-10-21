@@ -1,0 +1,42 @@
+{
+  "name": "moby-family",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Moby Family — интерактивное PWA-демо семейного банкинга МТБанка",
+  "bin": "scripts/server.js",
+  "scripts": {
+    "start": "node scripts/server.js",
+    "dev": "node scripts/server.js",
+    "test": "node scripts/test-flows.js",
+    "qr": "node scripts/make-qr.js",
+    "icons": "node scripts/make-icons.js",
+    "screenshots": "node scripts/screenshots.js",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/MobyFamily.exe --compress GZip",
+    "prepare-assets": "node scripts/make-icons.js && node scripts/make-qr.js"
+  },
+  "pkg": {
+    "assets": [
+      "index.html",
+      "manifest.webmanifest",
+      "service-worker.js",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  },
+  "devDependencies": {
+    "jsqr": "^1.4.0",
+    "pkg": "^5.8.1",
+    "playwright-core": "^1.49.1",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

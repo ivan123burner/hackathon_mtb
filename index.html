@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Moby Family — семейный банкинг МТБанка, который растёт вместе с ребёнком с 7 до 18 лет.">
+  <meta name="theme-color" content="#071B3D">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Moby Family">
+  <meta property="og:title" content="Moby Family — деньги растут вместе с ребёнком">
+  <meta property="og:description" content="Семейный банкинг МТБанка: субсчёт с 7 лет, свой счёт с 14, самостоятельность в 18. Интерактивное PWA-демо.">
+  <meta property="og:type" content="website">
+  <title>Moby Family — семейный банкинг МТБанка</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <script>
+    // The dev server injects a LAN address here, so a QR opened on a laptop
+    // immediately becomes scannable from a phone on the same Wi-Fi.
+    window.__MOBY_LAN_URL__ = window.__MOBY_LAN_URL__ || null;
+  </script>
+  <script src="js/config.js" defer></script>
+  <script src="js/icons.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/vendor/qrcode.js" defer></script>
+  <script src="js/qr.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient__orb ambient__orb--red"></div>
+    <div class="ambient__orb ambient__orb--blue"></div>
+    <div class="ambient__grid"></div>
+  </div>
+
+  <div class="showcase">
+    <aside class="showcase__aside showcase__aside--left">
+      <div class="showcase__brand">
+        <img class="brand-mark brand-mark--lg" src="assets/icons/icon.svg" alt="">
+        <div>
+          <span class="wordmark">moby</span><span class="wordmark__family">family</span>
+        </div>
+      </div>
+
+      <div class="showcase__eyebrow"><span class="live-dot"></span>МТБанк · Space Hackathon</div>
+      <h1 class="showcase__title">Деньги, которые <span>растут вместе</span> с ребёнком.</h1>
+      <p class="showcase__lede">Не детское приложение, а семейный сценарий внутри Moby. Права открываются возрастом — от субсчёта в 7 лет до собственного счёта в 18.</p>
+
+      <div class="showcase__metrics">
+        <div class="metric">
+          <strong>7 → 18</strong>
+          <span>лет вместе с ребёнком</span>
+        </div>
+        <div class="metric">
+          <strong>3 банки</strong>
+          <span>Трачу · Коплю · Делюсь</span>
+        </div>
+        <div class="metric">
+          <strong>2,99 BYN</strong>
+          <span>в месяц за пакет</span>
+        </div>
+      </div>
+
+      <div class="showcase__ladder" aria-label="Возрастная лестница прав">
+        <div class="ladder-step is-active">
+          <span class="ladder-step__age">7–13</span>
+          <span class="ladder-step__label">Субсчёт</span>
+        </div>
+        <div class="ladder-line"></div>
+        <div class="ladder-step">
+          <span class="ladder-step__age">14–17</span>
+          <span class="ladder-step__label">Свой счёт</span>
+        </div>
+        <div class="ladder-line"></div>
+        <div class="ladder-step">
+          <span class="ladder-step__age">18</span>
+          <span class="ladder-step__label">Взрослый Moby</span>
+        </div>
+      </div>
+
+      <p class="showcase__footnote">Интерактивный прототип. Все имена, суммы и операции — демонстрационные.</p>
+    </aside>
+
+    <div class="device" aria-label="Интерактивное демо Moby Family">
+      <div class="device__frame">
+        <div class="device__screen">
+          <div class="statusbar" aria-hidden="true">
+            <span class="statusbar__time">9:41</span>
+            <span class="statusbar__icons">
+              <svg viewBox="0 0 20 12" width="17" height="10"><path d="M1 9.5h2V11H1zm4-2h2V11H5zm4-2.3h2V11H9zm4-2.2h2V11h-2z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 20 14" width="17" height="12"><path d="M10 12.2 7.8 9.9a3.1 3.1 0 0 1 4.4 0L10 12.2Zm-4.3-4.4-1.6-1.6a8.4 8.4 0 0 1 11.8 0l-1.6 1.6a6.1 6.1 0 0 0-8.6 0ZM2.6 4.7 1 3.1a11.8 11.8 0 0 1 18 0l-1.6 1.6a9.5 9.5 0 0 0-14.8 0Z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 26 13" width="23" height="12"><rect x=".8" y=".8" width="21" height="11.4" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".55"/><rect x="2.5" y="2.5" width="16" height="8" rx="1.7" fill="currentColor"/><path d="M23.5 4.6v3.8c1-.3 1.5-.9 1.5-1.9s-.5-1.6-1.5-1.9Z" fill="currentColor" opacity=".55"/></svg>
+            </span>
+          </div>
+          <div class="app" id="app">
+            <main class="view-scroll" id="view">
+              <div class="boot">
+                <img src="assets/img/whale-hero.svg" alt="" class="boot__whale">
+                <div class="boot__brand">moby <span>family</span></div>
+                <div class="boot__loader"><span></span></div>
+              </div>
+            </main>
+            <nav class="tabbar" id="tabbar" aria-label="Основная навигация"></nav>
+            <div id="sheetRoot"></div>
+            <div id="toastRoot" aria-live="polite"></div>
+            <div id="confettiRoot" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="device__island" aria-hidden="true"></div>
+        <div class="device__button device__button--a" aria-hidden="true"></div>
+        <div class="device__button device__button--b" aria-hidden="true"></div>
+        <div class="device__button device__button--c" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <aside class="showcase__aside showcase__aside--right">
+      <div class="qr-card">
+        <div class="qr-card__head">
+          <div>
+            <span class="qr-card__kicker">PWA без установки</span>
+            <h2>Открыть демо<br>на телефоне</h2>
+          </div>
+          <span class="qr-card__badge">QR</span>
+        </div>
+        <div class="qr-card__code" id="desktopQr">
+          <div class="qr-skeleton"></div>
+        </div>
+        <p class="qr-card__hint">Наведите камеру телефона — оба устройства должны быть в одной Wi-Fi сети. Приложение откроется в браузере.</p>
+        <div class="qr-card__linkrow">
+          <span id="desktopQrLink">moby.family</span>
+          <button class="mini-icon" type="button" data-action="copy-link" aria-label="Скопировать ссылку">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h.5"/></svg>
+          </button>
+        </div>
+        <div class="qr-card__actions">
+          <button class="btn btn--red btn--sm" type="button" data-install>Установить</button>
+          <button class="btn btn--ghost-navy btn--sm" type="button" data-action="open-full">Открыть</button>
+        </div>
+        <div class="qr-card__foot">
+          <span class="pwa-pill"><span></span>Работает офлайн</span>
+          <span>v1.0 · demo</span>
+        </div>
+      </div>
+
+      <div class="showcase__quote">
+        <span class="showcase__quote-mark">“</span>
+        <p>К 18 годам семья получает самостоятельного человека, а МТБанк — взрослого клиента с нулевой стоимостью привлечения.</p>
+      </div>
+    </aside>
+  </div>
+
+  <noscript>
+    <div class="noscript">Для интерактивного демо Moby Family включите JavaScript.</div>
+  </noscript>
+</body>
+</html>
