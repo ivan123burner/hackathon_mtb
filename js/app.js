@@ -707,12 +707,12 @@
         '<div class="v2-tags">' +
           '<span class="v2-tag v2-tag--blue">' + person.age + ' ' + plural(person.age, ['год', 'года', 'лет']) + '</span>' +
           '<span class="v2-tag v2-tag--blue">' + (isTeen ? 'Свой счёт' : 'Субсчёт') + '</span>' +
-          (isTeen ? '<span class="v2-tag v2-tag--green"><i></i>Ст. 25 ГК РБ</span>' : '') +
         '</div>' +
         '<div class="v2-balance balance-panel">' +
           '<div class="v2-balance__label">' + (isTeen ? 'Мой счёт' : 'Твои деньги') + '</div>' +
           '<div class="v2-balance__amount"><span>' + fmt(person.balance) + '</span><small>BYN</small></div>' +
         '</div>' +
+        (isTeen ? '<button class="teen-request" type="button" disabled aria-disabled="true">' + icon('send', 16) + 'Запрос</button>' : '') +
       '</header>' +
       '<div class="content">' +
         '<section class="section">' +
