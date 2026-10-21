@@ -405,7 +405,7 @@
     var map = {
       home: state.role === 'parent' ? 'Главная — Moby Family' : 'Мои деньги — Moby Family',
       family: 'Семья — Moby Family',
-      missions: 'Money Missions — Moby Family',
+      missions: 'Миссии — Moby Family',
       qr: 'Поделиться — Moby Family',
       more: 'Ещё — Moby Family',
       child: 'Профиль ребёнка — Moby Family',
@@ -680,7 +680,7 @@
     return '<button class="mission-card" type="button" data-action="open-mission" data-mission="' + mission.id + '" data-child="' + person.id + '">' +
       '<span class="mission-card__icon">' + icon(mission.icon, 24) + '</span>' +
       '<span class="mission-card__body">' +
-        '<span class="mission-card__kicker"><i></i>Money Mission · ' + mission.duration + ' мин</span>' +
+        '<span class="mission-card__kicker"><i></i>Миссия · ' + mission.duration + ' мин</span>' +
         '<b class="mission-card__title">' + esc(mission.title) + '</b>' +
         '<span class="mission-card__text">' + esc(mission.lead) + '</span>' +
         '<span class="mission-card__meta">' +
@@ -737,7 +737,7 @@
         '</section>' +
         seriesBanner(person) +
         '<section class="section">' +
-          sectionHead('Money Missions', linkButton('Все', 'navigate', 'data-to="missions"')) +
+          sectionHead('Миссии', linkButton('Все', 'navigate', 'data-to="missions"')) +
           missionTeaser(featured, person) +
         '</section>' +
         (isTeen ? limitCard(person, spent, limit, limitPct) : giftMiniCard(person)) +
@@ -877,7 +877,7 @@
         '</section>' +
 
         '<section class="section">' +
-          sectionHead('Money Missions', linkButton('Все миссии', 'navigate', 'data-to="missions"')) +
+          sectionHead('Миссии', linkButton('Все миссии', 'navigate', 'data-to="missions"')) +
           missionTeaser('snacks', people.masha) +
         '</section>' +
         '<div class="tabbar-spacer"></div>' +
@@ -886,7 +886,7 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Money Missions                                                      */
+  /* Миссии                                                              */
   /* ------------------------------------------------------------------ */
 
   function renderMissions(param) {
@@ -899,19 +899,19 @@
     var featured = D.missions.filter(function (m) { return done.indexOf(m.id) === -1; })[0] || D.missions[0];
 
     return '<section class="screen page page--missions">' +
-      subHeader('Money Missions', {
+      subHeader('Миссии', {
         eyebrow: isParent ? 'Прогресс семьи' : '3–5 минут · на твоих данных',
         action: '<button class="icon-btn icon-btn--soft" type="button" data-action="open-sheet" data-sheet="about" aria-label="О миссиях">' + icon('info', 19) + '</button>'
       }) +
       '<div class="page__body">' +
         '<div class="missions-hero">' +
           '<div class="missions-hero__glow" aria-hidden="true"></div>' +
-          '<div class="missions-hero__head"><span class="kicker kicker--light">Moby learning</span><img src="assets/img/whale-hero.svg" alt="" class="missions-hero__whale"></div>' +
+          '<div class="missions-hero__head"><span class="kicker kicker--light">Обучение Moby</span><img src="assets/img/whale-hero.svg" alt="" class="missions-hero__whale"></div>' +
           '<h2>' + (isParent ? 'Учимся на реальных данных' : 'Твоя следующая миссия') + '</h2>' +
           '<p>' + (isParent ? 'Moby превращает реальные траты и цели детей в короткие игры. Родитель видит прогресс, ребёнок — смысл.' : 'Короткие задания о деньгах, безопасности и привычках. Без скучных лекций.') + '</p>' +
           '<div class="missions-stats">' +
             '<div><b>' + doneTotal + '</b><span>миссий пройдено</span></div>' +
-            '<div><b>' + points + '</b><span>Moby-баллов</span></div>' +
+            '<div><b>' + points + '</b><span>баллов Moby</span></div>' +
             '<div><b>' + person.streak + '</b><span>дней в серии</span></div>' +
           '</div>' +
           (isParent ? '<div class="mission-select">' +
@@ -925,7 +925,7 @@
           '<span class="featured-mission__top"><span class="mission-cat">' + icon(featured.icon, 15) + esc(featured.category) + '</span><span class="featured-mission__time">' + featured.duration + ' мин</span></span>' +
           '<span class="featured-mission__title">' + esc(featured.title) + '</span>' +
           '<span class="featured-mission__text">' + esc(featured.lead) + '</span>' +
-          '<span class="featured-mission__bottom"><span class="featured-mission__points">+' + featured.points + ' Moby-баллов</span><span class="featured-mission__play">Пройти ' + icon('play', 13) + '</span></span>' +
+          '<span class="featured-mission__bottom"><span class="featured-mission__points">+' + featured.points + ' баллов Moby</span><span class="featured-mission__play">Пройти ' + icon('play', 13) + '</span></span>' +
         '</button>' +
 
         '<section class="section">' +
@@ -943,7 +943,7 @@
         '<div class="mission-locked">' +
           '<span class="mission-locked__icon">' + icon('lock', 18) + '</span>' +
           '<span><b>Скоро: Инфляция и мороженое</b><i>Новая миссия откроется в ноябре</i></span>' +
-          '<span class="mission-locked__chip">Level 2</span>' +
+          '<span class="mission-locked__chip">Уровень 2</span>' +
         '</div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
@@ -1066,7 +1066,7 @@
               '<div><b>1 ноя</b><span>списание</span></div>' +
             '</div>' +
             '<div class="package-card__bar"><span style="width:66%"></span></div>' +
-            '<div class="package-card__chips"><span>Оборот по карте</span><span>Остаток или цель</span><span>Money Mission</span></div>' +
+            '<div class="package-card__chips"><span>Оборот по карте</span><span>Остаток или цель</span><span>Миссия</span></div>' +
             '<div class="package-card__foot"><span>Следующее списание ' + D.family.nextCharge + '</span><button class="package-card__all" type="button" aria-disabled="true">Все пакеты ' + icon('chevron-right', 12) + '</button></div>' +
           '</article>' +
         '</section>' : '') +
@@ -1601,7 +1601,7 @@
         '<div class="notif-list">' +
           notifRow('sparkles', 'red', 'Подсказка для Маши', 'Пора настроить лимит на онлайн-покупки', 'сейчас') +
           notifRow('flame', 'blue', 'Серия накоплений', '12 дней подряд — ставка выросла на 0,5%', '1 ч назад') +
-          notifRow('shield', 'green', 'Алекс прошёл миссию', '«Стоп, дроппер!» — +15 Moby-баллов', 'вчера') +
+          notifRow('shield', 'green', 'Алекс прошёл миссию', '«Стоп, дроппер!» — +15 баллов Moby', 'вчера') +
         '</div>' +
         '<button class="btn btn--soft btn--block btn--sm" type="button" data-action="navigate" data-to="missions">К миссиям</button>';
     }
@@ -2296,12 +2296,12 @@
           '<div class="mission-done__brand">' + brandMarkup('brand--light') + '</div>' +
           '<div class="mission-done__hero">' +
             '<div class="trophy">' + icon('trophy', 42) + '</div>' +
-            '<span class="mission-done__kicker">Mission complete</span>' +
+            '<span class="mission-done__kicker">Миссия выполнена</span>' +
             '<h1>' + (already ? 'Миссия пройдена' : 'Отлично!') + '</h1>' +
             '<p>' + esc(mission.result) + '</p>' +
           '</div>' +
           '<div class="mission-rewards">' +
-            '<div><span>+' + mission.points + '</span><b>Moby-баллов</b></div>' +
+            '<div><span>+' + mission.points + '</span><b>баллов Moby</b></div>' +
             '<div><span>+1</span><b>день серии</b></div>' +
             '<div><span>' + (doneCount(child)) + '</span><b>миссий у ' + child.name + '</b></div>' +
           '</div>' +
@@ -2326,7 +2326,7 @@
       '<div class="mission-screen">' +
         '<div class="mission-top">' +
           '<button class="icon-btn icon-btn--glass" type="button" data-action="mission-close" aria-label="Закрыть">' + icon('close', 20) + '</button>' +
-          '<div class="mission-top__center"><span>Money Mission</span><b>' + child.name + ' · ' + child.age + '</b></div>' +
+          '<div class="mission-top__center"><span>Миссия</span><b>' + child.name + ' · ' + child.age + '</b></div>' +
           '<span class="mission-top__points">' + icon('sparkles', 14) + '+' + mission.points + '</span>' +
         '</div>' +
         '<div class="mission-progress"><span style="width:' + progress + '%"></span></div>' +
