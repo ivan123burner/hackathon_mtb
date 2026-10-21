@@ -1,7 +1,7 @@
 /* Moby Family local demo server.
    Runs from source (`npm start`) or as a packaged Windows EXE.
    - serves the PWA over HTTP on the local network
-   - injects the LAN/QR address into index.html
+   - injects the share/QR address into index.html
    - opens the default browser automatically in EXE mode
    - falls back to the next free port if 4173 is busy
 */
@@ -89,6 +89,20 @@ function defaultRouteAddress() {
 
 function publicBaseUrl() {
   if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/?$/, '/');
+  return configuredProductionUrl() || lanBaseUrl();
+}
+
+function configuredProductionUrl() {
+  try {
+    const source = fs.readFileSync(path.join(ROOT, 'js', 'config.js'), 'utf8');
+    const match = source.match(/productionUrl\s*:\s*'([^']+)'/);
+    return match ? match[1].replace(/\/?$/, '/') : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function lanBaseUrl() {
   const defaultAddress = defaultRouteAddress();
   if (defaultAddress) return 'http://' + defaultAddress + ':' + activePort + '/';
   const preferred = lanAddresses()[0];
@@ -178,7 +192,7 @@ server.on('listening', () => {
   });
   console.log('');
   console.log('  QR target: ' + publicBaseUrl());
-  console.log('  The phone must be on the same Wi-Fi network as this computer.');
+  console.log('  QR opens the public version and works across networks.');
   console.log('  Keep this window open while the demo is running. Press Ctrl+C to stop.');
   console.log('');
   if (IS_EXE) {

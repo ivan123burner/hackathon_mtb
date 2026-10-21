@@ -10,8 +10,11 @@
 
   function appBase() {
     var cfg = window.MOBY_CONFIG || {};
+    // Sharing links intentionally point to the hosted PWA so the QR works for
+    // people on other networks, even when the demo is opened from localhost.
+    if (cfg.productionUrl) return cfg.productionUrl;
     if (window.location.protocol === 'file:') {
-      return cfg.productionUrl || 'https://ivan123burner.github.io/hackathon_mtb/';
+      return 'https://ivan123burner.github.io/hackathon_mtb/';
     }
     var host = window.location.hostname;
     var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
@@ -21,9 +24,6 @@
       lan.hash = '';
       lan.search = '';
       return lan.toString();
-    }
-    if (isLocal && cfg.productionUrl) {
-      return cfg.productionUrl;
     }
     var base = new URL(window.location.href);
     base.hash = '';

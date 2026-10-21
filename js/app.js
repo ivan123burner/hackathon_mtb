@@ -991,8 +991,9 @@
     var qrCode = '<div class="qr-screen__code" data-qr-url="' + esc(content.url) + '" data-qr-logo="true"></div>';
     var host = window.location.hostname;
     var isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
-    var localLan = isLocalHost && !!window.__MOBY_LAN_URL__;
-    var isLocalNoLan = (window.location.protocol === 'file:' || (isLocalHost && !window.__MOBY_LAN_URL__));
+    var publicLink = isLocalHost && !!window.MOBY_CONFIG.productionUrl;
+    var localLan = !publicLink && isLocalHost && !!window.__MOBY_LAN_URL__;
+    var isLocalNoLan = !publicLink && (window.location.protocol === 'file:' || (isLocalHost && !window.__MOBY_LAN_URL__));
 
     return '<section class="screen page page--qr">' +
       subHeader('Поделиться', { eyebrow: 'Moby Family' }) +
@@ -1020,6 +1021,7 @@
           (tab === 'app' ?
             '<div class="qr-features"><span>' + icon('camera', 15) + 'Камерой телефона</span><span>' + icon('install', 15) + 'Можно установить</span><span>' + icon('shield', 15) + 'Работает офлайн</span></div>' : '') +
         '</div>' +
+        (publicLink ? '<p class="qr-wifi-note">' + icon('share', 14) + 'QR ведёт на публичную версию — откроется с любого устройства и в любой сети.</p>' : '') +
         (localLan ? '<p class="qr-wifi-note">' + icon('wifi', 14) + 'Телефон и ноутбук должны быть в одной Wi-Fi сети.</p>' : '') +
         (isLocalNoLan ? '<p class="qr-note">' + icon('info', 14) + 'Для сканирования с телефона запустите <b>npm start</b> и откройте демо по сетевому адресу — QR подставится автоматически.</p>' : '') +
         (tab === 'app' ?
