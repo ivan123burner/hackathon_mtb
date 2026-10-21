@@ -6,7 +6,7 @@
   var icon = MF.icon;
   var avatar = MF.avatar;
   var STORAGE_KEY = 'moby-family-state-v1';
-  var VALID_ROLES = ['parent', 'masha', 'alex', 'adult'];
+  var VALID_ROLES = ['parent', 'masha', 'alex'];
 
   var app, view, tabbar, sheetRoot, toastRoot, confettiRoot;
   var state;
@@ -64,18 +64,16 @@
   }
   function currentPerson() {
     if (state.role === 'parent') return D.people.anna;
-    if (state.role === 'adult') return D.people.mashaAdult;
     return D.people[state.role] || D.people.anna;
   }
   function personByRole(role) {
     if (role === 'parent') return D.people.anna;
-    if (role === 'adult') return D.people.mashaAdult;
     return D.people[role] || D.people.anna;
   }
   function childFor(id) { return D.people[id] || D.people.masha; }
   function roleLabel(role) {
     return {
-      parent: 'Родитель', masha: 'Маша · 12', alex: 'Алекс · 16', adult: 'Маша · 18'
+      parent: 'Родитель', masha: 'Маша · 9', alex: 'Алекс · 16'
     }[role] || 'Родитель';
   }
   function genitiveName(name) {
@@ -202,7 +200,7 @@
         '<div class="goal-card__numbers">' +
           '<strong>' + fmt(goal.saved) + ' <small>из ' + fmt(goal.target) + ' BYN</small></strong>' +
           '<p>Осталось ' + fmt(remaining) + ' BYN</p>' +
-          '<span class="goal-card__streak">' + icon('flame', 15) + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' в серии</span>' +
+          (options.hideStreak ? '' : '<span class="goal-card__streak">' + icon('flame', 15) + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' в серии</span>') +
         '</div>' +
       '</div>' +
       (options.footer === false ? '' :
@@ -241,8 +239,7 @@
     var byRole = {
       parent: common.concat(['family', 'child', 'limits']),
       masha: common.concat(['savings', 'limits']),
-      alex: common.concat(['savings', 'limits']),
-      adult: common.concat(['savings'])
+      alex: common.concat(['savings', 'limits'])
     };
     return (byRole[role] || byRole.parent).indexOf(screen) !== -1;
   }
@@ -364,7 +361,7 @@
     var role = state.role;
 
     if (screen === 'home') {
-      html = role === 'parent' ? renderParentHome() : role === 'adult' ? renderAdultHome() : renderKidHome(personByRole(role));
+      html = role === 'parent' ? renderParentHome() : renderKidHome(personByRole(role));
     } else if (screen === 'family') {
       html = renderFamily();
     } else if (screen === 'missions') {
@@ -376,11 +373,11 @@
     } else if (screen === 'child') {
       html = renderChildDetail(route.param || state.activeChild);
     } else if (screen === 'limits') {
-      html = renderLimits(route.param || (role === 'parent' ? state.activeChild : (role === 'adult' ? 'masha' : role)));
+      html = renderLimits(route.param || (role === 'parent' ? state.activeChild : role));
     } else if (screen === 'savings') {
       html = renderSavings();
     } else if (screen === 'cards') {
-      html = renderCards(route.param || (role === 'parent' ? state.activeChild : role === 'adult' ? 'masha' : role));
+      html = renderCards(route.param || (role === 'parent' ? state.activeChild : role));
     } else if (screen === 'age') {
       html = renderAge();
     } else if (screen === 'about') {
@@ -422,7 +419,7 @@
   function updateThemeColor(screen) {
     var meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
-    var dark = screen === 'home' || screen === 'welcome' || screen === 'gift' || screen === 'adult';
+    var dark = screen === 'home' || screen === 'welcome' || screen === 'gift';
     meta.setAttribute('content', dark ? '#071B3D' : '#F3F6FC');
   }
 
@@ -436,42 +433,27 @@
         { id: 'chat', label: 'Чат', ic: 'chat', disabled: true },
         { id: 'more', label: 'Ещё', ic: 'more' }
       ];
-    } else if (role === 'adult') {
-      tabs = [
-        { id: 'home', label: 'Главная', ic: 'home' },
-        { id: 'cards', label: 'Карта', ic: 'card' },
-        { id: 'qr', label: 'QR', ic: 'qr', center: true },
-        { id: 'missions', label: 'Миссии', ic: 'sparkles' },
-        { id: 'more', label: 'Ещё', ic: 'more' }
-      ];
     } else {
       tabs = [
         { id: 'home', label: 'Главная', ic: 'home' },
-        { id: 'savings', label: 'Копилка', ic: 'piggy' },
-        { id: 'qr', label: role === 'masha' ? 'Подарить' : 'QR', ic: 'qr', center: true },
         { id: 'missions', label: 'Миссии', ic: 'sparkles' },
         { id: 'more', label: 'Ещё', ic: 'more' }
       ];
     }
-    var activeMap = { child: 'family', limits: 'family', age: 'more', about: 'more', install: 'more', cards: role === 'adult' ? 'cards' : 'more' };
+    var activeMap = { child: 'family', limits: 'family', age: 'more', about: 'more', install: 'more', cards: 'more' };
     if (role !== 'parent' && active === 'limits') activeMap.limits = 'more';
     var current = activeMap[active] || active;
-    if (role !== 'parent' && active === 'savings') current = 'savings';
+    if (role !== 'parent' && (active === 'savings' || active === 'qr')) current = 'home';
     if (role === 'parent' && active === 'missions') current = 'family';
     if (role === 'parent' && active === 'qr') current = 'home';
     tabbar.classList.remove('is-hidden');
     tabbar.classList.toggle('tabbar--parent', role === 'parent');
+    tabbar.classList.toggle('tabbar--kids', role !== 'parent');
     tabbar.innerHTML = tabs.map(function (tab) {
       var isActive = current === tab.id;
       if (tab.disabled) {
         return '<button class="tab tab--disabled" type="button" aria-disabled="true">' +
           '<span class="tab__icon">' + icon(tab.ic, 22) + '</span>' +
-          '<span class="tab__label">' + tab.label + '</span>' +
-          '</button>';
-      }
-      if (tab.center) {
-        return '<button class="tab tab--center" type="button" data-action="navigate" data-to="' + tab.id + '" aria-label="' + tab.label + '">' +
-          '<span class="tab__center-icon">' + icon('qr', 23) + '</span>' +
           '<span class="tab__label">' + tab.label + '</span>' +
           '</button>';
       }
@@ -560,7 +542,7 @@
         (invite
           ? '<button class="role-primary" type="button" data-action="switch-role" data-role="masha">' +
               '<span class="role-primary__avatar">' + avatar('masha', 44) + '</span>' +
-              '<span class="role-primary__text"><b>Принять приглашение</b><span>Войти как Маша, 12 лет</span></span>' +
+              '<span class="role-primary__text"><b>Принять приглашение</b><span>Войти как Маша, 9 лет</span></span>' +
               '<span class="role-primary__arrow">' + icon('arrow-right', 19) + '</span>' +
             '</button>'
           : '<button class="role-primary" type="button" data-action="switch-role" data-role="parent">' +
@@ -570,7 +552,7 @@
             '</button>') +
         '<div class="role-mini">' +
           '<button class="role-mini__card" type="button" data-action="switch-role" data-role="masha">' +
-            avatar('masha', 34) + '<span><b>Маша</b><i>12 лет</i></span>' + icon('chevron-right', 14) +
+            avatar('masha', 34) + '<span><b>Маша</b><i>9 лет</i></span>' + icon('chevron-right', 14) +
           '</button>' +
           '<button class="role-mini__card" type="button" data-action="switch-role" data-role="alex">' +
             avatar('alex', 34) + '<span><b>Алекс</b><i>16 лет</i></span>' + icon('chevron-right', 14) +
@@ -665,7 +647,7 @@
       '<span class="insight-card__spark" aria-hidden="true">' + icon('sparkles', 20) + '</span>' +
       '<div class="insight-card__body">' +
         '<span class="kicker kicker--red"><i></i>Moby подсказывает</span>' +
-        '<h3>Маше 12 — пора платить онлайн?</h3>' +
+        '<h3>Маше 9 — пора платить онлайн?</h3>' +
         '<p>Дети её возраста уже расплачиваются в интернете. Исследования PISA: самостоятельность вместе с обсуждением трат дают <b>+30 баллов</b> финграмотности.</p>' +
         '<div class="insight-card__actions">' +
           '<button class="btn btn--red btn--xs" type="button" data-action="open-limits" data-child="masha">Настроить лимит</button>' +
@@ -698,8 +680,6 @@
 
   function renderKidHome(person) {
     var isTeen = person.stage === 'teen';
-    var pockets = person.pockets || { spend: 0, save: 0, share: 0 };
-    var split = person.split || { spend: 70, save: 20, share: 10 };
     var limit = state.limits[person.id] || person.limit;
     var spent = limit.spent == null ? person.limit.spent : limit.spent;
     var limitPct = pct(spent, limit.weekly);
@@ -719,43 +699,21 @@
           '<strong>' + fmt(person.balance) + ' <small>BYN</small></strong>' +
           (isTeen ? '<span class="account-legal">' + icon('shield', 13) + 'Ст. 25 ГК РБ</span>' : '<span class="hero__meta">На счёте у мамы · ты пользуешься</span>') +
         '</div>' +
-        '<div class="pockets">' +
-          pocketTile('spend', 'Трачу', pockets.spend, 'card', false) +
-          pocketTile('save', 'Коплю', pockets.save, 'piggy', true) +
-          pocketTile('share', 'Делюсь', pockets.share, 'heart', false) +
-        '</div>' +
-        '<div class="split-line">' +
-          '<span class="split-line__bar"><i style="width:' + split.spend + '%;background:#FF5A6A"></i><i style="width:' + split.save + '%;background:#77A6FF"></i><i style="width:' + split.share + '%;background:#8FE0C6"></i></span>' +
-          '<span class="split-line__text">Каждое поступление: ' + split.spend + ' / ' + split.save + ' / ' + split.share + ' <button type="button" data-action="pocket-info" data-child="' + person.id + '" data-pocket="split">' + icon('info', 13) + '</button></span>' +
-        '</div>' +
-        (isTeen ? '' : '') +
       '</header>' +
       '<div class="content">' +
         (isTeen ? teenRightsCard() : '') +
         '<section class="section">' +
-          goalCard(person, { label: isTeen ? 'Цель накопления' : 'Моя цель' }) +
+          goalCard(person, { label: isTeen ? 'Цель накопления' : 'Моя цель', hideStreak: true }) +
         '</section>' +
         seriesBanner(person) +
         '<section class="section">' +
           sectionHead('Миссии', linkButton('Все', 'navigate', 'data-to="missions"')) +
           missionTeaser(featured, person) +
         '</section>' +
-        (isTeen ? limitCard(person, spent, limit, limitPct) : giftMiniCard(person)) +
-        '<section class="section">' +
-          sectionHead('Последние операции', linkButton('Все', 'navigate', 'data-to="more"')) +
-          '<div class="tx-card">' + D.transactions[person.id].map(txRow).join('') + '</div>' +
-        '</section>' +
+        (person.id === 'masha' ? limitCard(person, spent, limit, limitPct) : '') +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
-  }
-
-  function pocketTile(pocket, label, amount, ic, accent) {
-    return '<button class="pocket ' + (accent ? 'pocket--accent' : '') + '" type="button" data-action="pocket-info" data-pocket="' + pocket + '">' +
-      '<span class="pocket__top"><span class="pocket__icon">' + icon(ic, 17) + '</span><span>' + label + '</span></span>' +
-      '<strong>' + fmt(amount) + '</strong>' +
-      '<span class="pocket__currency">BYN</span>' +
-      '</button>';
   }
 
   function teenRightsCard() {
@@ -782,68 +740,6 @@
       '</article>';
   }
 
-  function giftMiniCard(person) {
-    return '<button class="gift-mini" type="button" data-action="open-gift" data-child="' + person.id + '">' +
-      '<span class="gift-mini__icon">' + icon('gift', 20) + '</span>' +
-      '<span class="gift-mini__text"><b>Подарок по ссылке</b><span>Бабушка может пополнить «Коплю» без Moby</span></span>' +
-      icon('chevron-right', 17) +
-      '</button>';
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Adult home                                                          */
-  /* ------------------------------------------------------------------ */
-
-  function renderAdultHome() {
-    var person = D.people.mashaAdult;
-    return '<section class="screen home home--adult">' +
-      '<header class="hero hero--adult">' +
-        '<div class="hero__aurora" aria-hidden="true"></div>' +
-        '<div class="hero__grid" aria-hidden="true"></div>' +
-        '<div class="topbar">' + brandMarkup('brand--light', true) +
-          '<div class="adult-top">' + '<span class="adult-chip">18+</span>' +
-          '<button class="avatar-btn" type="button" data-action="role-sheet" aria-label="Профиль">' + avatar('masha', 38) + '</button></div>' +
-        '</div>' +
-        '<div class="adult-badge">' + icon('sparkles', 16) + 'Счёт открыт автоматически</div>' +
-        '<h1 class="hero__title adult-title">Маша, добро<br>пожаловать во взрослый Moby</h1>' +
-        '<p class="adult-lead">В день 18-летия счёт и история перешли во взрослый профиль. Без визита в банк, нового приложения и повторной идентификации.</p>' +
-        '<div class="adult-whale"><img src="assets/img/whale-hero.svg" alt=""></div>' +
-      '</header>' +
-      '<div class="content">' +
-        '<div class="adult-balance">' +
-          '<div><span>Доступно</span><strong>' + fmt(person.balance) + ' <small>BYN</small></strong></div>' +
-          '<span class="badge-glass badge-glass--dark"><i class="dot dot--green"></i>Взрослый счёт</span>' +
-        '</div>' +
-        '<div class="adult-stats">' +
-          '<div><b>11</b><span>лет с Moby</span></div>' +
-          '<div><b>47</b><span>миссий пройдено</span></div>' +
-          '<div><b>3</b><span>банки внутри</span></div>' +
-        '</div>' +
-        '<section class="section">' +
-          sectionHead('Твой путь с Moby') +
-          '<div class="path-card">' +
-            adultPath('7', 'Первый браслет', 'Субсчёт мамы и первые карманные') +
-            adultPath('14', 'Свой счёт по ст. 25 ГК РБ', 'Собственная карта и правила вместо разрешений') +
-            adultPath('18', 'Взрослый Moby', 'Автоматический переход. Всё осталось на месте') +
-          '</div>' +
-        '</section>' +
-        '<section class="section">' +
-          sectionHead('Что дальше') +
-          '<div class="adult-actions">' +
-            '<button class="action-tile" type="button" data-action="navigate" data-to="cards"><span>' + icon('card', 21) + '</span><b>Карта</b><i>Moby Card уже с тобой</i></button>' +
-            '<button class="action-tile" type="button" data-action="navigate" data-to="savings"><span>' + icon('piggy', 21) + '</span><b>Копилка</b><i>Серия 31 день</i></button>' +
-          '</div>' +
-        '</section>' +
-        '<button class="btn btn--soft btn--block" type="button" data-action="role-sheet">Вернуться в семейное демо</button>' +
-        '<div class="tabbar-spacer"></div>' +
-      '</div>' +
-      '</section>';
-  }
-
-  function adultPath(age, title, text) {
-    return '<div class="path-row"><span class="path-row__age">' + age + '</span><span><b>' + title + '</b><i>' + text + '</i></span></div>';
-  }
-
   /* ------------------------------------------------------------------ */
   /* Family                                                              */
   /* ------------------------------------------------------------------ */
@@ -863,10 +759,9 @@
           '<h2>Соколовы</h2>' +
           '<p>Один пакет · счёт-донор ' + family.accountMask + '</p>' +
           '<div class="family-avatars">' +
-            ['anna', 'dmitry', 'masha', 'alex', 'irina'].map(function (id) {
+            ['masha', 'alex'].map(function (id) {
               return '<span class="family-avatars__item">' + avatar(people[id].avatar, 38) + '</span>';
             }).join('') +
-            '<button class="family-avatars__add" type="button" data-action="open-invite" aria-label="Добавить участника">' + icon('plus', 16) + '</button>' +
           '</div>' +
           '<div class="family-hero__foot"><span><b>' + fmt(family.currentPrice) + ' BYN</b> / месяц</span><button class="family-hero__package" type="button" data-action="navigate" data-to="more">Пакет <span aria-hidden="true">›</span></button></div>' +
         '</div>' +
@@ -891,7 +786,7 @@
 
   function renderMissions(param) {
     var isParent = state.role === 'parent';
-    var selectedId = isParent ? (param === 'masha' || param === 'alex' ? param : (state.activeChild || 'masha')) : (state.role === 'adult' ? 'masha' : state.role);
+    var selectedId = isParent ? (param === 'masha' || param === 'alex' ? param : (state.activeChild || 'masha')) : state.role;
     var person = childFor(selectedId);
     var points = state.points[selectedId] || 0;
     var done = state.missionsDone[selectedId] || [];
@@ -1049,10 +944,15 @@
       '<div class="page__body">' +
         '<div class="profile-card">' +
           '<div class="profile-card__pattern" aria-hidden="true"></div>' +
-          '<div class="profile-card__avatar">' + avatar(person.avatar || 'anna', 58) + '<span>' + (state.role === 'adult' ? '18+' : isParent ? 'owner' : 'kid') + '</span></div>' +
+          '<div class="profile-card__avatar">' + avatar(person.avatar || 'anna', 58) + '<span>' + (isParent ? 'owner' : 'kid') + '</span></div>' +
           '<div class="profile-card__text"><span class="kicker kicker--light">' + roleLabel(state.role) + '</span><h2>' + person.fullName + '</h2><p>' + (isParent ? 'Владелец семейного пакета' : person.stageLabel || 'Участник семьи') + '</p></div>' +
           '<button class="btn btn--glass btn--xs" type="button" data-action="role-sheet">Сменить роль</button>' +
         '</div>' +
+
+        (!isParent ? '<section class="section">' +
+          sectionHead('Последние операции') +
+          '<div class="tx-card">' + D.transactions[person.id].map(txRow).join('') + '</div>' +
+        '</section>' : '') +
 
         (isParent ? '<section class="section package-section" id="packageBlock">' +
           sectionHead('Пакет') +
@@ -1233,19 +1133,18 @@
 
   function renderSavings() {
     var person = currentPerson();
-    var isAdult = state.role === 'adult';
     var goal = person.goal || { name: 'Резервный фонд', target: 1000, saved: person.pockets.save, rate: 4.4 };
-    var saved = isAdult ? person.pockets.save : goal.saved;
+    var saved = goal.saved;
     var progress = pct(saved, goal.target);
     var left = state.freezes[person.id] == null ? 1 : state.freezes[person.id];
     return '<section class="screen page page--savings">' +
-      subHeader('Копилка', { eyebrow: isAdult ? 'Взрослый Moby' : 'Цель и серия', back: 'home' }) +
+      subHeader('Копилка', { eyebrow: 'Цель и серия', back: 'home' }) +
       '<div class="page__body">' +
         '<div class="savings-hero">' +
           '<div class="savings-hero__glow" aria-hidden="true"></div>' +
-          '<div class="savings-hero__head"><span class="kicker kicker--light">' + (isAdult ? 'Мои накопления' : 'Моя цель') + '</span><span class="flame-pill">' + icon('flame', 15) + person.streak + '</span></div>' +
+          '<div class="savings-hero__head"><span class="kicker kicker--light">Моя цель</span><span class="flame-pill">' + icon('flame', 15) + person.streak + '</span></div>' +
           '<div class="savings-hero__main">' +
-            goalRing(progress, isAdult ? 'blue' : '') +
+            goalRing(progress) +
             '<div><h2>' + esc(goal.name) + '</h2><strong>' + fmt(saved) + ' <small>из ' + fmt(goal.target) + ' BYN</small></strong><p>Осталось ' + fmt(Math.max(0, goal.target - saved)) + ' BYN</p></div>' +
           '</div>' +
           '<div class="savings-hero__rate"><span>' + icon('chart', 15) + 'Ставка <b>' + goal.rate.toString().replace('.', ',') + '%</b> годовых</span><span>+0,5% за серию</span></div>' +
@@ -1283,26 +1182,25 @@
   /* ------------------------------------------------------------------ */
 
   function renderCards(param) {
-    var id = ['masha', 'alex', 'mashaAdult'].indexOf(param) !== -1 ? param : (state.role === 'parent' ? (state.activeChild || 'masha') : state.role === 'adult' ? 'mashaAdult' : state.role);
+    var id = ['masha', 'alex'].indexOf(param) !== -1 ? param : (state.role === 'parent' ? (state.activeChild || 'masha') : state.role);
     if (id === 'parent') id = 'masha';
     var person = D.people[id] || D.people.masha;
-    var isAdult = id === 'mashaAdult';
-    var isTeen = person.stage === 'teen' || isAdult;
-    var cardLast = { masha: '2207', alex: '4417', mashaAdult: '9914' }[id] || '2207';
-    var translit = { masha: 'M. SOKOLOVA', alex: 'A. SOKOLOV', mashaAdult: 'M. SOKOLOVA' }[id];
+    var isTeen = person.stage === 'teen';
+    var cardLast = { masha: '2207', alex: '4417' }[id] || '2207';
+    var translit = { masha: 'M. SOKOLOVA', alex: 'A. SOKOLOV' }[id];
     return '<section class="screen page page--cards">' +
       subHeader('Карты и браслеты', { eyebrow: 'Один SKU на возраст' }) +
       '<div class="page__body">' +
         '<div class="carrier-toggle">' +
-          '<button class="' + (!isTeen ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="cards" data-param="masha">' + avatar('masha', 25) + 'Маша · 12</button>' +
-          '<button class="' + (isTeen && !isAdult ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="cards" data-param="alex">' + avatar('alex', 25) + 'Алекс · 16</button>' +
+          '<button class="' + (!isTeen ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="cards" data-param="masha">' + avatar('masha', 25) + 'Маша · 9</button>' +
+          '<button class="' + (isTeen ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="cards" data-param="alex">' + avatar('alex', 25) + 'Алекс · 16</button>' +
         '</div>' +
-        '<div class="bank-card bank-card--' + (id === 'alex' ? 'blue' : id === 'mashaAdult' ? 'adult' : 'red') + '">' +
+        '<div class="bank-card bank-card--' + (id === 'alex' ? 'blue' : 'red') + '">' +
           '<div class="bank-card__pattern" aria-hidden="true"></div>' +
           '<div class="bank-card__top"><span class="bank-card__brand">moby <i>family</i></span><span class="bank-card__contactless">' + icon('wifi', 18) + '</span></div>' +
           '<div class="bank-card__chip"><i></i><i></i><i></i></div>' +
           '<div class="bank-card__number">•••• &nbsp;•••• &nbsp;•••• &nbsp;' + cardLast + '</div>' +
-          '<div class="bank-card__bottom"><span><b>' + translit + '</b><i>' + (isAdult ? 'ADULT' : isTeen ? 'TEEN' : 'FAMILY') + '</i></span><span class="bank-card__mir">MIR</span></div>' +
+          '<div class="bank-card__bottom"><span><b>' + translit + '</b><i>' + (isTeen ? 'TEEN' : 'FAMILY') + '</i></span><span class="bank-card__mir">MIR</span></div>' +
         '</div>' +
         '<div class="carrier-caption"><span>' + (isTeen ? 'Moby Card' : 'Moby Band + карта по требованию') + '</span><span class="carrier-status"><i></i>активна</span></div>' +
         (!isTeen ?
@@ -1354,7 +1252,7 @@
       '<div class="page__body">' +
         '<div class="age-hero">' +
           '<div class="age-hero__pattern" aria-hidden="true"></div>' +
-          '<span class="kicker kicker--light">Симулятор · Маша</span>' +
+          '<span class="kicker kicker--light">Симулятор · возраст</span>' +
           '<div class="age-hero__age"><strong id="ageValue">' + age + '</strong><span>лет</span></div>' +
           '<p class="age-hero__stage" id="ageStageName">' + stage.title + '</p>' +
           '<div class="age-slider-wrap">' +
@@ -1372,7 +1270,7 @@
           '<p class="age-detail__lead" id="ageLead">' + stage.lead + '</p>' +
           '<ul class="age-rights" id="ageRights">' + stageRightsMarkup(stage) + '</ul>' +
           '<div class="age-notes"><div><b>Родитель</b><span id="ageParentNote">' + stage.parent + '</span></div><div><b>' + (stage.id === 'adult' ? 'Человек' : 'Ребёнок') + '</b><span id="ageChildNote">' + stage.child + '</span></div></div>' +
-          '<div id="ageCta">' + (stage.id === 'adult' ? '<button class="btn btn--red btn--block" type="button" data-action="open-adult">Открыть взрослый Moby ' + icon('arrow-right', 16) + '</button>' : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>') + '</div>' +
+          '<div id="ageCta">' + (stage.id === 'adult' ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии демо доступны профили детей 7–17 лет.</p>' : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>') + '</div>' +
         '</div>' +
         '<section class="section">' +
           sectionHead('Три этапа') +
@@ -1429,9 +1327,8 @@
           sectionHead('Демо-сценарии') +
           '<div class="demo-scenarios">' +
             '<button type="button" data-action="switch-role" data-role="parent"><span>' + avatar('anna', 34) + '</span><b>Родитель</b><i>Лимиты, подсказки, семья</i></button>' +
-            '<button type="button" data-action="switch-role" data-role="masha"><span>' + avatar('masha', 34) + '</span><b>Маша, 12</b><i>Три банки и цель</i></button>' +
+            '<button type="button" data-action="switch-role" data-role="masha"><span>' + avatar('masha', 34) + '</span><b>Маша, 9</b><i>Субсчёт и цель</i></button>' +
             '<button type="button" data-action="switch-role" data-role="alex"><span>' + avatar('alex', 34) + '</span><b>Алекс, 16</b><i>Свой счёт</i></button>' +
-            '<button type="button" data-action="switch-role" data-role="adult"><span>' + avatar('masha', 34) + '</span><b>Маша, 18</b><i>Автопереход</i></button>' +
           '</div>' +
         '</section>' +
         '<button class="btn btn--soft btn--block" type="button" data-action="open-sheet" data-sheet="legal">Юридическая база</button>' +
@@ -1502,7 +1399,7 @@
     if (parentNote) parentNote.textContent = stage.parent;
     if (childNote) childNote.textContent = stage.child;
     if (cta) cta.innerHTML = stage.id === 'adult'
-      ? '<button class="btn btn--red btn--block" type="button" data-action="open-adult">Открыть взрослый Moby ' + icon('arrow-right', 16) + '</button>'
+      ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии демо доступны профили детей 7–17 лет.</p>'
       : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>';
     $$('.stage-card').forEach(function (card) {
       card.classList.toggle('is-current', card.getAttribute('data-stage-card') === stage.id);
@@ -1520,7 +1417,7 @@
       slider.value = age;
       updateAgeUi(age);
     }
-    if (age >= 18) setTimeout(function () { toast('Маше 18 — взрослый счёт готов', { icon: 'sparkles' }); }, 200);
+    if (age >= 18) setTimeout(function () { toast('18 лет — переход во взрослый Moby', { icon: 'sparkles' }); }, 200);
     else if (age >= 14) setTimeout(function () { toast('С 14 лет — собственный счёт', { icon: 'shield' }); }, 200);
   }
 
@@ -1581,9 +1478,8 @@
     if (type === 'roles') {
       var roles = [
         { id: 'parent', title: 'Анна, мама', text: 'Семейный счёт, лимиты и миссии', person: 'anna' },
-        { id: 'masha', title: 'Маша, 12', text: 'Субсчёт, три банки и своя цель', person: 'masha' },
-        { id: 'alex', title: 'Алекс, 16', text: 'Свой счёт и правила вместо разрешений', person: 'alex' },
-        { id: 'adult', title: 'Маша, 18', text: 'Взрослый счёт после автоперехода', person: 'mashaAdult' }
+        { id: 'masha', title: 'Маша, 9', text: 'Субсчёт, цель и родительские правила', person: 'masha' },
+        { id: 'alex', title: 'Алекс, 16', text: 'Свой счёт и правила вместо разрешений', person: 'alex' }
       ];
       return sheetHead('Смотреть как', 'Демо-режим') +
         '<div class="role-list">' + roles.map(function (r) {
@@ -1985,11 +1881,6 @@
           break;
         case 'set-age':
           setAge(Number(ds.age));
-          break;
-        case 'open-adult':
-          closeSheet();
-          setRole('adult');
-          confetti();
           break;
         case 'open-invite':
           openSheet('invite');

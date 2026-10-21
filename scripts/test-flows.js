@@ -104,11 +104,9 @@ async function decodeQr(page, name) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
   });
   check('age updates', (await page.locator('#ageValue').innerText()) === '18');
-  check('adult CTA visible', await page.locator('[data-action="open-adult"]').count() === 1);
+  check('adult role removed', await page.locator('[data-action="open-adult"]').count() === 0);
+  check('adult stage hint', (await page.locator('#ageCta').innerText()).includes('7–17'));
   await page.screenshot({ path: path.join(OUT, 't-age-18.png') });
-  await page.locator('[data-action="open-adult"]').click();
-  await page.waitForTimeout(500);
-  check('adult role', page.url().includes('role=adult'), page.url());
 
   // Gift flow.
   await page.evaluate((base) => { location.href = base + '?gift=masha'; }, BASE);

@@ -87,9 +87,6 @@ async function shot(page, name) {
     await go(page, '?role=alex#/home');
     await shot(page, 'm-alex-home');
 
-    await go(page, '?role=adult#/home');
-    await shot(page, 'm-adult-home');
-
     await go(page, '?role=alex#/missions');
     await page.evaluate(() => document.querySelector('[data-action="open-mission"]').click());
     await page.waitForTimeout(350);

@@ -25,7 +25,7 @@
         note: 'Видит операции и пополняет. Не может закрыть пакет.'
       },
       masha: {
-        id: 'masha', name: 'Маша', fullName: 'Мария Соколова', age: 12,
+        id: 'masha', name: 'Маша', fullName: 'Мария Соколова', age: 9,
         role: 'child', roleLabel: 'Ребёнок', avatar: 'masha',
         stage: 'base', stageLabel: 'Субсчёт',
         balance: 114.10,
@@ -58,16 +58,6 @@
         id: 'irina', name: 'Ирина', fullName: 'Ирина Петровна', age: 64,
         role: 'close', roleLabel: 'Близкие', avatar: 'grandma',
         note: 'Дарит по ссылке — без установки Moby.'
-      },
-      mashaAdult: {
-        id: 'mashaAdult', name: 'Маша', fullName: 'Мария Соколова', age: 18,
-        role: 'adult', roleLabel: 'Взрослый клиент', avatar: 'masha',
-        stage: 'adult', stageLabel: 'Взрослый счёт',
-        balance: 2480.00,
-        pockets: { spend: 1680.00, save: 640.00, share: 160.00 },
-        split: { spend: 70, save: 20, share: 10 },
-        streak: 31,
-        points: 690
       }
     },
 
@@ -76,7 +66,7 @@
     members: [
       { id: 'anna', name: 'Анна Соколова', label: 'Владелец пакета', role: 'owner', tone: 'red', status: 'Онлайн' },
       { id: 'dmitry', name: 'Дмитрий Соколов', label: 'Со-родитель · видит и пополняет', role: 'co-parent', tone: 'blue', status: 'Приглашён' },
-      { id: 'masha', name: 'Маша, 12', label: 'Ребёнок · субсчёт', role: 'child', tone: 'blue', status: 'Базовый' },
+      { id: 'masha', name: 'Маша, 9', label: 'Ребёнок · субсчёт', role: 'child', tone: 'blue', status: 'Базовый' },
       { id: 'alex', name: 'Алекс, 16', label: 'Подросток · свой счёт', role: 'teen', tone: 'green', status: 'Свой счёт' },
       { id: 'irina', name: 'Бабушка Ирина', label: 'Близкие · подарки по ссылке', role: 'close', tone: 'sand', status: 'Без приложения' }
     ],
@@ -252,11 +242,6 @@
         { id: 1, title: 'Spotify Premium', subtitle: 'Подписка · сегодня', amount: -9.90, icon: 'refresh', tone: 'green' },
         { id: 2, title: 'Перевод от папы', subtitle: 'Карманные · вчера', amount: 25.00, icon: 'send', tone: 'blue' },
         { id: 3, title: 'Кофейня', subtitle: 'Карта Moby · вчера', amount: -6.50, icon: 'coffee', tone: 'sand' }
-      ],
-      adult: [
-        { id: 1, title: 'Зарплата', subtitle: 'Поступление · сегодня', amount: 1850.00, icon: 'arrow-down-left', tone: 'green' },
-        { id: 2, title: 'Аренда', subtitle: 'Автоплатёж · вчера', amount: -650.00, icon: 'home', tone: 'blue' },
-        { id: 3, title: 'Moby Family', subtitle: 'Семейный пакет · 1 ноября', amount: -4.49, icon: 'heart', tone: 'red' }
       ]
     },
 
