@@ -118,6 +118,36 @@
       '</button>' +
       '</div>';
   }
+  function v2Profile(name, opts) {
+    opts = opts || {};
+    var initial = String(name || '').trim().charAt(0).toUpperCase();
+    return '<div class="v2-profile">' +
+      '<div class="v2-profile__main">' +
+        '<button class="v2-avatar" type="button" data-action="role-sheet" aria-label="Сменить профиль">' + esc(initial) + '</button>' +
+        '<div class="v2-profile__text">' +
+          '<b>' + esc(name) + '</b>' +
+          '<span>' + (opts.date || todayLabel()) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<button class="v2-bell" type="button" data-action="notifications" aria-label="Уведомления">' +
+        icon('bell', 19) + '<span class="notif-dot"></span>' +
+      '</button>' +
+      '</div>';
+  }
+
+  function packageCard() {
+    var family = D.family;
+    var price = Number(family.currentPrice).toFixed(2).replace('.', ',');
+    return '<button class="home-package" type="button" data-action="navigate" data-to="more">' +
+      '<span class="home-package__body">' +
+        '<span class="home-package__kicker">Пакет услуг</span>' +
+        '<span class="home-package__title">Moby Family</span>' +
+        '<span class="home-package__meta">' + price + ' BYN в месяц · списание ' + family.nextCharge + '</span>' +
+      '</span>' +
+      '<span class="home-package__art">' + icon('phone', 32) + '</span>' +
+      '</button>';
+  }
+
   function subHeader(title, opts) {
     opts = opts || {};
     var person = currentPerson();
@@ -581,22 +611,22 @@
   function renderParentHome() {
     var family = D.family;
 
-    return '<section class="screen home">' +
+    return '<section class="screen home home--v2">' +
       '<header class="hero hero--parent">' +
         '<div class="hero__aurora" aria-hidden="true"></div>' +
         '<div class="hero__grid" aria-hidden="true"></div>' +
-        '<div class="topbar">' + brandMarkup('brand--light', true) + topActions() + '</div>' +
-        '<div class="hero__intro">' +
-          '<span class="hero__date">' + todayLabel() + '</span>' +
-          '<h1 class="hero__title">Привет, Анна</h1>' +
+        v2Profile('Анна') +
+        '<div class="v2-tags">' +
+          '<span class="v2-tag v2-tag--blue">Семейный счёт</span>' +
+          '<span class="v2-tag v2-tag--dark">' + esc(family.accountMask.slice(-4)) + '</span>' +
+          '<span class="v2-tag v2-tag--green"><i></i>Активен</span>' +
         '</div>' +
-        '<div class="balance-panel">' +
-          '<div class="balance-panel__head">' +
-            '<span class="balance-panel__label">Семейный счёт <span class="badge-glass"><i class="dot dot--green"></i>активен</span></span>' +
-            '<button class="icon-btn icon-btn--glass" type="button" data-action="toggle-balance" aria-label="' + (state.balanceHidden ? 'Показать баланс' : 'Скрыть баланс') + '">' + icon(state.balanceHidden ? 'eyeOff' : 'eye', 18) + '</button>' +
+        '<div class="v2-balance balance-panel">' +
+          '<div class="v2-balance__amount">' +
+            '<span>' + hiddenAmount(family.balance) + '</span><small>BYN</small>' +
+            '<button class="v2-balance__eye" type="button" data-action="toggle-balance" aria-label="' + (state.balanceHidden ? 'Показать баланс' : 'Скрыть баланс') + '">' + icon(state.balanceHidden ? 'eyeOff' : 'eye', 18) + '</button>' +
           '</div>' +
-          '<div class="balance-panel__amount"><span>' + hiddenAmount(family.balance) + '</span><small>BYN</small></div>' +
-          '<div class="balance-panel__meta">' + family.accountMask + '<span>·</span>счёт-донор</div>' +
+          '<div class="v2-balance__meta">' + family.accountMask + '<span>·</span><span>счёт-донор</span></div>' +
         '</div>' +
         '<div class="quick-row">' +
           quickButton('plus', 'Пополнить', 'open-topup') +
@@ -610,7 +640,7 @@
           sectionHead('История') +
           '<div class="tx-card tx-card--compact">' + D.transactions.masha.slice(0, 2).map(txRow).join('') + D.transactions.alex.slice(0, 1).map(txRow).join('') + '</div>' +
         '</section>' +
-        '<p class="home__fineprint">Moby Family · ' + family.currentPrice.toString().replace('.', ',') + ' BYN в месяц · списание ' + family.nextCharge + '</p>' +
+        packageCard() +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -689,15 +719,16 @@
       '<header class="hero ' + (isTeen ? 'hero--teen' : 'hero--child') + '">' +
         '<div class="hero__aurora" aria-hidden="true"></div>' +
         '<div class="hero__grid" aria-hidden="true"></div>' +
-        '<div class="topbar">' + brandMarkup('brand--light', true) + topActions() + '</div>' +
-        '<div class="hero__intro hero__intro--kid">' +
-          '<div><span class="hero__date">' + todayLabel() + '</span><h1 class="hero__title">Привет, ' + person.name + '!</h1></div>' +
-          '<span class="age-pill">' + person.age + ' ' + plural(person.age, ['год', 'года', 'лет']) + ' · ' + (isTeen ? 'свой счёт' : 'субсчёт') + '</span>' +
+        v2Profile(person.name) +
+        '<div class="v2-tags">' +
+          '<span class="v2-tag v2-tag--blue">' + person.age + ' ' + plural(person.age, ['год', 'года', 'лет']) + '</span>' +
+          '<span class="v2-tag v2-tag--blue">' + (isTeen ? 'Свой счёт' : 'Субсчёт') + '</span>' +
+          (isTeen ? '<span class="v2-tag v2-tag--green"><i></i>Ст. 25 ГК РБ</span>' : '') +
         '</div>' +
-        '<div class="kid-hero__balance">' +
-          '<span>' + (isTeen ? 'Мой счёт' : 'Твои деньги') + '</span>' +
-          '<strong>' + fmt(person.balance) + ' <small>BYN</small></strong>' +
-          (isTeen ? '<span class="account-legal">' + icon('shield', 13) + 'Ст. 25 ГК РБ</span>' : '<span class="hero__meta">На счёте у мамы · ты пользуешься</span>') +
+        '<div class="v2-balance balance-panel">' +
+          '<div class="v2-balance__label">' + (isTeen ? 'Мой счёт' : 'Твои деньги') + '</div>' +
+          '<div class="v2-balance__amount"><span>' + fmt(person.balance) + '</span><small>BYN</small></div>' +
+          '<div class="v2-balance__meta">' + (isTeen ? 'Собственный счёт подростка' : 'На счёте у мамы · ты пользуешься') + '</div>' +
         '</div>' +
       '</header>' +
       '<div class="content">' +
