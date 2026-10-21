@@ -157,7 +157,7 @@
         (opts.eyebrow ? '<span class="subhead__eyebrow">' + esc(opts.eyebrow) + '</span>' : '') +
         '<h1>' + esc(title) + '</h1>' +
       '</div>' +
-      (opts.action || '<button class="avatar-btn avatar-btn--sm" type="button" data-action="role-sheet" aria-label="Профиль">' + avatar(person.avatar || 'anna', 34) + '</button>') +
+      (opts.action === false ? '' : (opts.action || '<button class="avatar-btn avatar-btn--sm" type="button" data-action="role-sheet" aria-label="Профиль">' + avatar(person.avatar || 'anna', 34) + '</button>')) +
       '</header>';
   }
   function sectionHead(title, action, count) {
@@ -590,7 +590,6 @@
         v2Profile('Анна') +
         '<div class="v2-tags">' +
           '<span class="v2-tag v2-tag--blue">Семейный счёт</span>' +
-          '<span class="v2-tag v2-tag--dark">' + esc(family.accountMask.slice(-4)) + '</span>' +
           '<span class="v2-tag v2-tag--green"><i></i>Активен</span>' +
         '</div>' +
         '<div class="v2-balance balance-panel">' +
@@ -675,14 +674,14 @@
 
   function missionTeaser(missionId, person) {
     var mission = D.missionsById[missionId];
-    return '<button class="mission-card" type="button" data-action="open-mission" data-mission="' + mission.id + '" data-child="' + person.id + '">' +
+    return '<button class="mission-card" type="button" data-action="navigate" data-to="missions">' +
       '<span class="mission-card__icon">' + icon(mission.icon, 24) + '</span>' +
       '<span class="mission-card__body">' +
         '<span class="mission-card__kicker"><i></i>Миссия · ' + mission.duration + ' мин</span>' +
         '<b class="mission-card__title">' + esc(mission.title) + '</b>' +
         '<span class="mission-card__text">' + esc(mission.lead) + '</span>' +
         '<span class="mission-card__meta">' +
-          '<span class="mission-card__play">Начать ' + icon('play', 12) + '</span>' +
+          '<span class="mission-card__play">Перейти к миссиям ' + icon('arrow-right', 12) + '</span>' +
         '</span>' +
       '</span>' +
       '<span class="mission-card__deco" aria-hidden="true"></span>' +
@@ -713,12 +712,15 @@
         '<div class="v2-balance balance-panel">' +
           '<div class="v2-balance__label">' + (isTeen ? 'Мой счёт' : 'Твои деньги') + '</div>' +
           '<div class="v2-balance__amount"><span>' + fmt(person.balance) + '</span><small>BYN</small></div>' +
-          '<div class="v2-balance__meta">' + (isTeen ? 'Собственный счёт подростка' : 'На счёте у мамы · ты пользуешься') + '</div>' +
         '</div>' +
       '</header>' +
       '<div class="content">' +
         '<section class="section">' +
           goalCard(person, { label: isTeen ? 'Цель накопления' : 'Моя цель' }) +
+        '</section>' +
+        '<section class="section">' +
+          sectionHead('Последние операции') +
+          '<div class="tx-card">' + D.transactions[person.id].map(txRow).join('') + '</div>' +
         '</section>' +
         '<section class="section">' +
           sectionHead('Миссии', linkButton('Все', 'navigate', 'data-to="missions"')) +
@@ -750,7 +752,7 @@
         '<span class="limit-card__value">' + fmt(spent) + ' / ' + fmtInt(limit.weekly) + '</span>' +
       '</div>' +
       '<span class="limit-bar"><i style="width:' + progress + '%"></i></span>' +
-      '<div class="limit-card__foot"><span>Осталось ' + fmt(Math.max(0, limit.weekly - spent)) + ' BYN</span><button class="text-btn" data-action="navigate" data-to="limits">Подробнее ' + icon('chevron-right', 13) + '</button></div>' +
+      '<div class="limit-card__foot"><span>Осталось ' + fmt(Math.max(0, limit.weekly - spent)) + ' BYN</span></div>' +
       '</article>';
   }
 
@@ -823,7 +825,7 @@
     return '<section class="screen page page--missions">' +
       subHeader('Миссии', {
         eyebrow: isParent ? 'Прогресс семьи' : 'Задания для тебя',
-        action: '<button class="icon-btn icon-btn--soft" type="button" data-action="open-sheet" data-sheet="about" aria-label="О миссиях">' + icon('info', 19) + '</button>'
+        action: false
       }) +
       '<div class="page__body">' +
         '<div class="missions-hero">' +
@@ -958,11 +960,6 @@
           '<div class="profile-card__text"><span class="kicker kicker--light">' + roleLabel(state.role) + '</span><h2>' + person.fullName + '</h2><p>' + (isParent ? 'Владелец семейного пакета' : person.stageLabel || 'Участник семьи') + '</p></div>' +
         '</div>' +
 
-        (!isParent ? '<section class="section">' +
-          sectionHead('Последние операции') +
-          '<div class="tx-card">' + D.transactions[person.id].map(txRow).join('') + '</div>' +
-        '</section>' : '') +
-
         (isParent ? '<section class="section package-section" id="packageBlock">' +
           sectionHead('Пакет') +
           '<article class="package-card">' +
@@ -976,7 +973,7 @@
             '</div>' +
             '<div class="package-card__bar"><span style="width:66%"></span></div>' +
             '<div class="package-card__chips"><span>Оборот по карте</span><span>Остаток или цель</span><span>Миссия</span></div>' +
-            '<div class="package-card__foot"><span>Следующее списание ' + D.family.nextCharge + '</span><button class="package-card__all" type="button" aria-disabled="true">Все пакеты ' + icon('chevron-right', 12) + '</button></div>' +
+            '<div class="package-card__foot"><span>Следующее списание ' + D.family.nextCharge + '</span></div>' +
           '</article>' +
         '</section>' : '') +
 
@@ -1016,12 +1013,10 @@
     var limit = state.limits[person.id] || person.limit;
     var limitPct = pct(limit.spent == null ? person.limit.spent : limit.spent, limit.weekly);
     var isTeen = person.stage === 'teen';
-    var legalTitle = isTeen ? 'Собственный счёт подростка' : 'Субсчёт к счёту родителя';
-    var legalText = isTeen ? 'Ст. 25 ГК РБ в редакции с 19.11.2024: базовые условия доступны с 14 лет без согласия родителя на каждую операцию.' : 'Инструкция НБ № 34, п. 17: владелец счёта — родитель, ребёнок — пользователь.';
     return '<section class="screen page page--child">' +
       subHeader(person.name + ', ' + person.age, {
         eyebrow: isTeen ? 'Подросток · свой счёт' : 'Ребёнок · субсчёт',
-        action: '<button class="icon-btn icon-btn--soft" type="button" data-action="open-limits" data-child="' + person.id + '" aria-label="Правила">' + icon('ruler', 19) + '</button>'
+        action: '<button class="icon-btn icon-btn--soft" type="button" data-action="open-sheet" data-sheet="about" aria-label="О миссиях">' + icon('info', 19) + '</button>'
       }) +
       '<div class="page__body">' +
         '<div class="child-profile">' +
@@ -1031,19 +1026,13 @@
             stageBadge(person) +
           '</div>' +
           '<div class="child-profile__balance"><span>Баланс</span><strong>' + fmt(person.balance) + ' <small>BYN</small></strong></div>' +
-          '<div class="child-pockets">' +
-            '<span><i>Трачу</i><b>' + fmt(person.pockets.spend) + '</b></span>' +
-            '<span><i>Коплю</i><b>' + fmt(person.pockets.save) + '</b></span>' +
-            '<span><i>Делюсь</i><b>' + fmt(person.pockets.share) + '</b></span>' +
-          '</div>' +
           '<div class="child-profile__actions">' +
-            '<button type="button" data-action="navigate" data-to="cards" data-param="' + person.id + '">' + icon('card', 16) + (isTeen ? 'Карта' : 'Браслет') + '</button>' +
+            (isTeen
+              ? '<button type="button" data-action="navigate" data-to="cards" data-param="' + person.id + '">' + icon('card', 16) + 'Карта</button>'
+              : '<button type="button" disabled aria-disabled="true">' + icon('card', 16) + 'Браслет</button>') +
             '<button type="button" data-action="open-limits" data-child="' + person.id + '">' + icon('ruler', 16) + 'Правила</button>' +
-            '<button type="button" data-action="switch-role" data-role="' + person.id + '">' + icon('eye', 16) + 'Открыть</button>' +
           '</div>' +
         '</div>' +
-
-        '<div class="legal-strip"><span>' + icon(isTeen ? 'shield' : 'info', 18) + '</span><div><b>' + legalTitle + '</b><p>' + legalText + '</p></div></div>' +
 
         '<section class="section">' + goalCard(person, { label: 'Цель' }) + '</section>' +
 
@@ -1052,7 +1041,6 @@
           '<div class="rules-summary">' +
             '<div class="rules-summary__head"><span class="rules-summary__icon">' + icon('ruler', 18) + '</span><span><b>' + fmtInt(limit.weekly) + ' BYN в неделю</b><i>' + (isTeen ? 'Правила вместо разрешений' : 'Лимит и категории') + '</i></span><span>' + fmt(limit.spent == null ? person.limit.spent : limit.spent) + ' / ' + fmtInt(limit.weekly) + '</span></div>' +
             '<span class="limit-bar"><i style="width:' + limitPct + '%"></i></span>' +
-            '<div class="rules-summary__tags"><span class="' + (limit.online ? 'is-on' : '') + '">Онлайн ' + (limit.online ? 'до ' + fmtInt(limit.online) + ' BYN' : 'выкл') + '</span><span class="' + (limit.transfers ? 'is-on' : '') + '">Переводы ' + (limit.transfers ? 'разрешены' : 'выкл') + '</span><span class="' + (limit.cash ? 'is-on' : '') + '">Наличные ' + (limit.cash ? 'да' : 'выкл') + '</span></div>' +
           '</div>' +
         '</section>' +
 
@@ -1127,7 +1115,6 @@
         (editable ?
           '<button class="btn btn--red btn--block save-limits" type="button" data-action="save-limits" data-child="' + person.id + '">Сохранить правила</button>' :
           '<button class="btn btn--soft btn--block" type="button" data-action="request-limit">Попросить маму изменить</button>') +
-        '<p class="sheet__note page-note">' + icon('lock', 13) + 'Изменения сохраняются. В продукте — с подтверждением родителя по биометрии.</p>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1561,6 +1548,11 @@
       var sourceLabel = fromOwnCard ? 'Списать с карты Алекса' : 'Списать с семейного счёта';
       var sourceValue = fromOwnCard ? 'Moby Card •••• 4417' : D.family.accountMask;
       return sheetHead('Пополнить', sourceTitle) +
+        '<div class="assign-child-toggle topup-child-toggle">' +
+          ['masha', 'alex'].map(function (id) {
+            return '<button class="' + (child.id === id ? 'is-active' : '') + '" type="button" data-action="topup-child" data-child="' + id + '" data-pocket="' + pocket + '">' + avatar(id, 24) + childFor(id).name + '</button>';
+          }).join('') +
+        '</div>' +
         '<div class="sheet-child">' + avatar(child.avatar, 44) + '<div><b>' + child.name + ', ' + child.age + '</b><span>' + (pocket === 'save' ? 'В банку «Коплю»' : 'В банку «Трачу»') + '</span></div>' + stageBadge(child) + '</div>' +
         '<div class="amount-chips">' +
           [10, 20, 50, 100].map(function (n) {
@@ -1624,7 +1616,6 @@
         '<div class="recipient-row">' +
           '<button class="recipient is-selected" type="button" data-action="pick-recipient" data-name="Маше">' + avatar('masha', 38) + '<span>Маша</span></button>' +
           '<button class="recipient" type="button" data-action="pick-recipient" data-name="Алексу">' + avatar('alex', 38) + '<span>Алекс</span></button>' +
-          '<button class="recipient" type="button" data-action="pick-recipient" data-name="Ирине">' + avatar('grandma', 38) + '<span>Ирина</span></button>' +
         '</div>' +
         '<label class="amount-input"><span>Сумма</span><span class="amount-input__field"><input type="text" inputmode="decimal" value="25,00" aria-label="Сумма перевода"><i>BYN</i></span></label>' +
         '<div class="sheet-row"><span>Со счёта</span><b>Семейный · 1 248,50 BYN</b></div>' +
@@ -1924,6 +1915,11 @@
           ui.mode = 'welcome';
           tabbar.classList.add('is-hidden');
           render();
+          break;
+        case 'topup-child':
+          ui.topupChild = ds.child === 'alex' ? 'alex' : 'masha';
+          ui.topupPocket = ds.pocket || 'spend';
+          openSheet('topup', { child: ui.topupChild, pocket: ui.topupPocket });
           break;
         case 'select-amount':
           selectAmount(trigger);
