@@ -128,9 +128,9 @@ async function decodeQr(page, name) {
   check('QR points to app role=parent', !!code && code.data.includes('role=parent'), code && code.data);
 
   // Sheet / install page presence.
-  await page.evaluate((base) => { location.href = base + '?role=parent#/more'; }, BASE);
-  await page.waitForTimeout(400);
-  await page.locator('.menu-row[data-install]').click();
+  await page.evaluate((base) => { location.href = base + '?role=parent#/qr'; }, BASE);
+  await page.waitForTimeout(500);
+  await page.locator('.install-banner [data-install]').click();
   await page.waitForTimeout(300);
   check('install sheet fallback', (await page.locator('.sheet').innerText()).includes('Установить'));
   await page.locator('.sheet [data-action="close-sheet"]').click();
@@ -172,14 +172,17 @@ async function decodeQr(page, name) {
   await page.waitForTimeout(400);
   check('QR invite tab', (await page.locator('.qr-screen h2').innerText()).includes('Пригласить'));
 
-  // Reset flow.
-  await page.evaluate(() => { location.hash = '#/more'; });
-  await page.waitForTimeout(300);
-  await page.locator('[data-action="reset"]').click();
-  await page.waitForTimeout(300);
-  await page.locator('[data-action="confirm-reset"]').click();
+  // More screen: package block, menu and package shortcut from family.
+  await page.evaluate((base) => { location.href = base + '?role=parent#/more'; }, BASE);
   await page.waitForTimeout(500);
-  check('reset shows welcome', await page.locator('.welcome').count() === 1);
+  check('package block visible', await page.locator('#packageBlock').count() === 1);
+  check('more menu items', await page.locator('.more-row').count() === 9, await page.locator('.more-row').count());
+  await page.evaluate((base) => { location.href = base + '?role=parent#/family'; }, BASE);
+  await page.waitForTimeout(400);
+  await page.locator('.family-hero__package').click();
+  await page.waitForTimeout(500);
+  check('package shortcut opens more', page.url().includes('#/more'), page.url());
+  check('package shortcut lands on package', await page.locator('#packageBlock').isVisible());
 
   check('no runtime errors', errors.length === 0, errors.join(' | '));
 

@@ -433,8 +433,7 @@
       tabs = [
         { id: 'home', label: 'Главная', ic: 'home' },
         { id: 'family', label: 'Семья', ic: 'users' },
-        { id: 'qr', label: 'QR', ic: 'qr', center: true },
-        { id: 'missions', label: 'Миссии', ic: 'sparkles' },
+        { id: 'chat', label: 'Чат', ic: 'chat', disabled: true },
         { id: 'more', label: 'Ещё', ic: 'more' }
       ];
     } else if (role === 'adult') {
@@ -458,9 +457,18 @@
     if (role !== 'parent' && active === 'limits') activeMap.limits = 'more';
     var current = activeMap[active] || active;
     if (role !== 'parent' && active === 'savings') current = 'savings';
+    if (role === 'parent' && active === 'missions') current = 'family';
+    if (role === 'parent' && active === 'qr') current = 'home';
     tabbar.classList.remove('is-hidden');
+    tabbar.classList.toggle('tabbar--parent', role === 'parent');
     tabbar.innerHTML = tabs.map(function (tab) {
       var isActive = current === tab.id;
+      if (tab.disabled) {
+        return '<button class="tab tab--disabled" type="button" aria-disabled="true">' +
+          '<span class="tab__icon">' + icon(tab.ic, 22) + '</span>' +
+          '<span class="tab__label">' + tab.label + '</span>' +
+          '</button>';
+      }
       if (tab.center) {
         return '<button class="tab tab--center" type="button" data-action="navigate" data-to="' + tab.id + '" aria-label="' + tab.label + '">' +
           '<span class="tab__center-icon">' + icon('qr', 23) + '</span>' +
@@ -589,9 +597,6 @@
   /* ------------------------------------------------------------------ */
 
   function renderParentHome() {
-    var anna = D.people.anna;
-    var masha = D.people.masha;
-    var alex = D.people.alex;
     var family = D.family;
 
     return '<section class="screen home">' +
@@ -613,34 +618,16 @@
         '</div>' +
         '<div class="quick-row">' +
           quickButton('plus', 'Пополнить', 'open-topup') +
-          quickButton('send', 'Перевод', 'open-transfer') +
-          quickButton('ruler', 'Лимиты', 'open-limits') +
-          quickButton('gift', 'Подарок', 'open-gift-link') +
+          quickButton('send', 'Перевести', 'open-transfer') +
+          quickButton('card', 'Оплатить') +
         '</div>' +
       '</header>' +
       '<div class="content">' +
-        '<section class="section">' +
-          sectionHead('Дети', linkButton('Управлять', 'navigate', 'data-to="family"'), '2') +
-          '<div class="kids-grid">' + kidCard(masha) + kidCard(alex) + '</div>' +
-        '</section>' +
         (!state.insightDismissed ? insightCard() : '') +
-        '<section class="section">' +
-          sectionHead('Растёт вместе', linkButton('Возрастная лестница', 'navigate', 'data-to="age"')) +
-          streakCard(masha) +
+        '<section class="section history-section">' +
+          sectionHead('История') +
+          '<div class="tx-card tx-card--compact">' + D.transactions.masha.slice(0, 2).map(txRow).join('') + D.transactions.alex.slice(0, 1).map(txRow).join('') + '</div>' +
         '</section>' +
-        '<section class="section">' +
-          sectionHead('Money Missions', linkButton('Все миссии', 'navigate', 'data-to="missions"')) +
-          missionTeaser('snacks', masha) +
-        '</section>' +
-        '<section class="section">' +
-          sectionHead('Последнее у семьи', linkButton('История', 'navigate', 'data-to="more"')) +
-          '<div class="tx-card">' + D.transactions.masha.slice(0, 2).map(txRow).join('') + D.transactions.alex.slice(0, 1).map(txRow).join('') + '</div>' +
-        '</section>' +
-        '<button class="gift-banner" type="button" data-action="open-gift" data-child="masha">' +
-          '<span class="gift-banner__icon">' + icon('gift', 21) + '</span>' +
-          '<span class="gift-banner__text"><b>Бабушка ещё не в Moby?</b><span>Подарок Маше по ссылке — без установки приложения</span></span>' +
-          icon('chevron-right', 18) +
-        '</button>' +
         '<p class="home__fineprint">Moby Family · ' + family.currentPrice.toString().replace('.', ',') + ' BYN в месяц · списание ' + family.nextCharge + '</p>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
@@ -648,7 +635,7 @@
   }
 
   function quickButton(ic, label, action) {
-    return '<button class="quick" type="button" data-action="' + action + '">' +
+    return '<button class="quick' + (action ? '' : ' quick--static') + '" type="button" ' + (action ? 'data-action="' + action + '"' : 'aria-disabled="true"') + '>' +
       '<span class="quick__icon">' + icon(ic, 20) + '</span>' +
       '<span class="quick__label">' + label + '</span>' +
       '</button>';
@@ -684,24 +671,6 @@
           '<button class="btn btn--red btn--xs" type="button" data-action="open-limits" data-child="masha">Настроить лимит</button>' +
           '<button class="text-btn" type="button" data-action="dismiss-insight">Позже</button>' +
         '</div>' +
-      '</div>' +
-      '</article>';
-  }
-
-  function streakCard(person) {
-    var left = state.freezes[person.id] == null ? 1 : state.freezes[person.id];
-    return '<article class="streak-card">' +
-      '<div class="streak-card__glow" aria-hidden="true"></div>' +
-      '<div class="streak-card__head">' +
-        '<div><span class="kicker kicker--light">Серия накоплений</span><h3>' + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' Маши</h3></div>' +
-        '<span class="flame-pill">' + icon('flame', 16) + person.streak + '</span>' +
-      '</div>' +
-      weekStrip(true) +
-      '<div class="streak-card__footer">' +
-        '<div class="streak-stat"><b>+0,5%</b><span>к ставке за серию</span></div>' +
-        '<div class="streak-stat"><b>' + left + '</b><span>заморозка в квартале</span></div>' +
-        '<button class="btn btn--glass btn--xs" type="button" data-action="freeze-streak" data-child="' + person.id + '" ' + (left ? '' : 'disabled') + '>' +
-          icon('snowflake', 14) + 'Заморозить</button>' +
       '</div>' +
       '</article>';
   }
@@ -899,57 +868,17 @@
             }).join('') +
             '<button class="family-avatars__add" type="button" data-action="open-invite" aria-label="Добавить участника">' + icon('plus', 16) + '</button>' +
           '</div>' +
-          '<div class="family-hero__foot"><span><b>' + fmt(family.currentPrice) + ' BYN</b> / месяц</span><span>Списание ' + family.nextCharge + '</span></div>' +
+          '<div class="family-hero__foot"><span><b>' + fmt(family.currentPrice) + ' BYN</b> / месяц</span><button class="family-hero__package" type="button" data-action="navigate" data-to="more">Пакет <span aria-hidden="true">›</span></button></div>' +
         '</div>' +
 
         '<section class="section">' +
-          sectionHead('Участники', linkButton('Пригласить', 'open-invite')) +
-          '<div class="members-card">' + D.members.map(function (member) {
-            var person = people[member.id];
-            return '<button class="member-row" type="button" data-action="open-member" data-id="' + member.id + '">' +
-              '<span class="member-row__avatar">' + avatar(person.avatar, 40) + '</span>' +
-              '<span class="member-row__text"><b>' + member.name + '</b><span>' + member.label + '</span></span>' +
-              '<span class="member-row__status member-row__status--' + member.tone + '">' + member.status + '</span>' +
-              icon('chevron-right', 15, 'member-row__chev') +
-              '</button>';
-          }).join('') + '</div>' +
+          sectionHead('Дети', '<button class="link-btn link-btn--static" type="button" aria-disabled="true">Больше ' + icon('chevron-right', 14) + '</button>', '2') +
+          '<div class="kids-grid">' + kidCard(people.masha) + kidCard(people.alex) + '</div>' +
         '</section>' +
 
         '<section class="section">' +
-          sectionHead('Добавить в семью') +
-          '<div class="invite-grid">' +
-            '<button class="invite-tile" type="button" data-action="open-invite"><span class="invite-tile__icon">' + icon('user-plus', 20) + '</span><b>Ребёнка</b><i>Вход по приглашению</i></button>' +
-            '<button class="invite-tile" type="button" data-action="open-invite"><span class="invite-tile__icon invite-tile__icon--blue">' + icon('users', 20) + '</span><b>Со-родителя</b><i>Видит и пополняет</i></button>' +
-            '<button class="invite-tile" type="button" data-action="navigate" data-to="qr" data-param="gift"><span class="invite-tile__icon invite-tile__icon--green">' + icon('gift', 20) + '</span><b>Подарок</b><i>Без установки Moby</i></button>' +
-          '</div>' +
-        '</section>' +
-
-        '<section class="section">' +
-          sectionHead('Пакет', linkButton('Условия', 'open-sheet', 'data-sheet="about"')) +
-          '<div class="tariff-card">' +
-            '<div class="tariff-card__head"><div><span class="kicker">Moby Family</span><strong>4,49 <small>BYN / мес</small></strong></div><span class="tariff-card__save">−50% на второго</span></div>' +
-            '<p class="tariff-card__text">2,99 BYN — первый ребёнок. Второй — 1,50 BYN. Третий и многодетные семьи — бесплатно.</p>' +
-            '<div class="tariff-conditions">' +
-              '<span class="is-met">' + icon('check', 13) + 'Оборот по карте</span>' +
-              '<span class="is-met">' + icon('check', 13) + 'Остаток или цель</span>' +
-              '<span class="is-open">' + icon('clock', 13) + 'Money Mission</span>' +
-            '</div>' +
-            '<div class="tariff-card__foot"><span>Выполнено 2 из 3</span><b>Пакет бесплатен в этом месяце</b></div>' +
-          '</div>' +
-        '</section>' +
-
-        '<section class="section">' +
-          sectionHead('Права открываются возрастом') +
-          '<button class="age-mini-card" type="button" data-action="navigate" data-to="age">' +
-            '<span class="age-mini__top"><span><span class="kicker">7 → 18</span><b>Растёт вместе с ребёнком</b></span>' + icon('arrow-up-right', 17) + '</span>' +
-            '<span class="age-mini__track">' +
-              '<span class="age-mini__step is-done"><i>7–13</i><b>Субсчёт</b></span>' +
-              '<span class="age-mini__line is-done"></span>' +
-              '<span class="age-mini__step is-done"><i>14–17</i><b>Свой счёт</b></span>' +
-              '<span class="age-mini__line"></span>' +
-              '<span class="age-mini__step"><i>18</i><b>Взрослый</b></span>' +
-            '</span>' +
-          '</button>' +
+          sectionHead('Money Missions', linkButton('Все миссии', 'navigate', 'data-to="missions"')) +
+          missionTeaser('snacks', people.masha) +
         '</section>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
@@ -1112,6 +1041,7 @@
   function renderMore() {
     var person = currentPerson();
     var isParent = state.role === 'parent';
+    var version = String(window.MOBY_CONFIG.version || '').replace(/-demo$/, '');
     return '<section class="screen page page--more">' +
       subHeader('Ещё', { eyebrow: 'Профиль и настройки' }) +
       '<div class="page__body">' +
@@ -1122,55 +1052,49 @@
           '<button class="btn btn--glass btn--xs" type="button" data-action="role-sheet">Сменить роль</button>' +
         '</div>' +
 
-        '<section class="section">' +
-          sectionHead('Демо-сценарии') +
-          '<div class="menu-card">' +
-            menuRow('ruler', 'Возрастная лестница', '7–13 → 14–17 → 18', 'navigate', 'age', '', 'blue') +
-            menuRow('card', 'Карты и браслеты', 'Moby Band и физическая карта', 'navigate', 'cards', '', 'red') +
-            menuRow('sparkles', 'Money Missions', 'Игровое обучение на реальных данных', 'navigate', 'missions', '', 'green') +
-          '</div>' +
-        '</section>' +
-
-        '<section class="section">' +
-          sectionHead('Приложение') +
-          '<div class="menu-card">' +
-            '<button class="menu-row" type="button" data-install>' + menuIcon('install', 'navy') + '<span class="menu-row__text"><b>Установить Moby Family</b><i>PWA на экран «Домой»</i></span>' + icon('chevron-right', 15) + '</button>' +
-            menuRow('qr', 'QR для жюри', 'Открыть демо на другом телефоне', 'navigate', 'qr', '', 'navy') +
-            menuRow('info', 'О проекте', 'Концепция, экономика и юридическая база', 'open-sheet', '', 'about', 'blue') +
-            menuRow('shield', 'Юридическая база РБ', 'Инструкция НБ №34 · ст. 25 ГК РБ', 'open-sheet', '', 'legal', 'green') +
-          '</div>' +
-        '</section>' +
-
-        (isParent ? '<section class="section">' +
+        (isParent ? '<section class="section package-section" id="packageBlock">' +
           sectionHead('Пакет') +
-          '<div class="tariff-mini">' +
-            '<div class="tariff-mini__top"><span>' + icon('users', 17) + 'Moby Family</span><b>' + D.family.currentPrice.toString().replace('.', ',') + ' <small>BYN/мес</small></b></div>' +
-            '<div class="tariff-mini__bar"><span style="width:66%"></span></div>' +
-            '<div class="tariff-mini__foot"><span>2 из 3 условий выполнено</span><b>0 BYN в этом месяце</b></div>' +
-          '</div>' +
+          '<article class="package-card">' +
+            '<div class="package-card__head">' +
+              '<div><span class="kicker kicker--light">Подключён сейчас</span><h2>Moby Family</h2><p>Семейный пакет · Маша и Алекс</p></div>' +
+              '<span class="badge-glass"><i class="dot dot--green"></i>активен</span>' +
+            '</div>' +
+            '<div class="package-card__price"><strong>' + fmt(D.family.currentPrice) + '</strong><span>BYN / месяц</span></div>' +
+            '<div class="package-card__stats">' +
+              '<div><b>2</b><span>ребёнка</span></div>' +
+              '<div><b>2 из 3</b><span>условий</span></div>' +
+              '<div><b>1 ноя</b><span>списание</span></div>' +
+            '</div>' +
+            '<div class="package-card__bar"><span style="width:66%"></span></div>' +
+            '<div class="package-card__chips"><span>Оборот по карте</span><span>Остаток или цель</span><span>Money Mission</span></div>' +
+            '<div class="package-card__foot"><span>Следующее списание ' + D.family.nextCharge + '</span><button class="package-card__all" type="button" aria-disabled="true">Все пакеты ' + icon('chevron-right', 12) + '</button></div>' +
+          '</article>' +
         '</section>' : '') +
 
-        '<section class="section">' +
-          sectionHead('Демо') +
-          '<div class="menu-card">' +
-            menuRow('refresh', 'Сбросить демо', 'Вернуть исходные данные', 'reset', '', '', 'navy') +
-            menuRow('arrow-right', 'Экран входа', 'Показать welcome с ролями', 'go-welcome', '', '', 'red') +
-          '</div>' +
-        '</section>' +
+        '<div class="more-menu">' +
+          moreRow('id-card', 'Персональные данные', 'blue', 'data-action="demo-info" data-title="Персональные данные"') +
+          moreRow('document', 'Документы', 'blue', 'data-action="demo-info" data-title="Документы"') +
+          moreRow('bell', 'Уведомления', 'blue', 'data-action="notifications"') +
+          moreRow('currency', 'Курсы валют', 'blue', 'data-action="demo-info" data-title="Курсы валют"') +
+          moreRow('star', 'Манички. Вход в программу приятностей', 'white', 'data-action="demo-info" data-title="Манички"') +
+          moreRow('refresh', 'Обменник Moby', 'pink', 'data-action="demo-info" data-title="Обменник Moby"') +
+          moreRow('pin', 'Банк на карте', 'blue', 'data-action="demo-info" data-title="Банк на карте"') +
+          moreRow('bank', 'О банке', 'blue', 'data-action="demo-info" data-title="О банке"') +
+          moreRow('shield', 'Ваша безопасность', 'blue', 'data-action="open-sheet" data-sheet="legal"') +
+        '</div>' +
 
-        '<div class="more-foot"><img src="assets/icons/icon.svg" alt=""><span>Moby Family · ' + window.MOBY_CONFIG.version + '<br>МТБанк × Space Hackathon</span></div>' +
+        '<div class="more-version">Версия приложения ' + esc(version) + '</div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
   }
 
-  function menuIcon(ic, tone) {
-    return '<span class="menu-row__icon menu-row__icon--' + (tone || 'navy') + '">' + icon(ic, 19) + '</span>';
-  }
-  function menuRow(ic, title, subtitle, action, to, sheet, tone) {
-    var attrs = action === 'navigate' ? 'data-action="navigate" data-to="' + to + '"' : action === 'open-sheet' ? 'data-action="open-sheet" data-sheet="' + sheet + '"' : 'data-action="' + action + '"';
-    return '<button class="menu-row" type="button" ' + attrs + '>' + menuIcon(ic, tone) +
-      '<span class="menu-row__text"><b>' + title + '</b><i>' + subtitle + '</i></span>' + icon('chevron-right', 15) + '</button>';
+  function moreRow(ic, title, tone, attrs) {
+    return '<button class="more-row" type="button" ' + (attrs || '') + '>' +
+      '<span class="more-row__icon more-row__icon--' + (tone || 'blue') + '">' + icon(ic, 20) + '</span>' +
+      '<span class="more-row__title">' + title + '</span>' +
+      icon('chevron-right', 16) +
+      '</button>';
   }
 
   /* ------------------------------------------------------------------ */
@@ -2017,6 +1941,9 @@
           break;
         case 'open-sheet':
           openSheet(ds.sheet || 'about');
+          break;
+        case 'demo-info':
+          toast('«' + (ds.title || 'Раздел') + '» — в демо недоступно', { icon: 'info', tone: 'info' });
           break;
         case 'close-sheet':
           closeSheet();
