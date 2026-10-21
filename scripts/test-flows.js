@@ -80,7 +80,9 @@ async function decodeQr(page, name) {
   // Mission flow.
   await page.evaluate(() => { location.hash = '#/missions'; });
   await page.waitForTimeout(300);
-  await page.locator('.featured-mission').click();
+  await page.locator('[data-sheet="moby-missions"]').click();
+  await page.waitForTimeout(250);
+  await page.locator('.mission-sheet-row').first().click();
   await page.waitForTimeout(250);
   check('mission overlay open', await page.locator('.mission-screen').count() === 1);
   for (let q = 0; q < 3; q += 1) {
@@ -123,7 +125,7 @@ async function decodeQr(page, name) {
   await page.waitForTimeout(600);
   const { code, file } = await decodeQr(page, 't-qr');
   check('QR decodes', !!code, file);
-  check('QR points to app role=parent', !!code && code.data.includes('role=parent'), code && code.data);
+  check('QR points to welcome', !!code && code.data.includes('source=qr') && !code.data.includes('role='), code && code.data);
 
   // Sheet / install page presence.
   await page.evaluate((base) => { location.href = base + '?role=parent#/qr'; }, BASE);

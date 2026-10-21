@@ -11,7 +11,7 @@
   function appBase() {
     var cfg = window.MOBY_CONFIG || {};
     // Sharing links intentionally point to the hosted PWA so the QR works for
-    // people on other networks, even when the demo is opened from localhost.
+    // people on other networks, even when the app is opened from localhost.
     if (cfg.productionUrl) return cfg.productionUrl;
     if (window.location.protocol === 'file:') {
       return 'https://ivan123burner.github.io/hackathon_mtb/';
@@ -49,7 +49,7 @@
 
   function shareUrls() {
     return {
-      app: urlWith({ role: 'parent', source: 'qr' }),
+      app: urlWith({ source: 'qr' }),
       giftMasha: urlWith({ gift: 'masha', source: 'gift' }),
       giftAlex: urlWith({ gift: 'alex', source: 'gift' }),
       invite: urlWith({ invite: 'child', source: 'invite' })

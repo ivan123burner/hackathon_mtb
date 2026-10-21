@@ -1,4 +1,4 @@
-/* Content and demo data for Moby Family. All figures are fictional. */
+/* Content data for Moby Family. All figures are fictional. */
 (function () {
   'use strict';
 
@@ -33,9 +33,7 @@
         split: { spend: 70, save: 20, share: 10 },
         limit: { weekly: 70, spent: 18.60, online: 30, cash: 0, transfers: false },
         goal: { name: 'Наушники', target: 240, saved: 46.80, rate: 3.5, icon: 'headphones' },
-        streak: 12,
         done: 4,
-        points: 140,
         entry: 'По приглашению мамы',
         carrier: 'Moby Band'
       },
@@ -48,9 +46,7 @@
         split: { spend: 65, save: 30, share: 5 },
         limit: { weekly: 150, spent: 63.20, online: 120, cash: 20, transfers: true },
         goal: { name: 'Велосипед', target: 800, saved: 112.00, rate: 4.2, icon: 'bike' },
-        streak: 8,
         done: 7,
-        points: 235,
         entry: 'Собственный счёт с 14 лет',
         carrier: 'Moby Card'
       },
@@ -77,7 +73,7 @@
         badge: 'Базовый',
         law: 'Инструкция НБ № 34, п. 17',
         lead: 'Родитель — владелец счёта, ребёнок — пользователь. Деньги семьи остаются под контролем взрослого.',
-        rights: ['Платежный браслет или карта', 'Карманные и автопополнение', 'Три банки: Трачу / Коплю / Делюсь', 'Миссии и серия накоплений'],
+        rights: ['Платежный браслет или карта', 'Карманные и автопополнение', 'Три банки: Трачу / Коплю / Делюсь', 'Миссии и накопления с целью'],
         parent: 'Лимиты, категории и правила задаёт родитель.',
         child: 'Учитcя тратить на реальных, но безопасных суммах.'
       },
@@ -95,7 +91,7 @@
         badge: '18 лет',
         law: 'Автоматический переход внутри Moby',
         lead: 'В день рождения счёт и история переходят во взрослый профиль. Никаких новых приложений и отделений.',
-        rights: ['Взрослый счёт и карта', 'Сохранённая история и серия', 'Продукты МТБанка без нового онбординга', 'Полная финансовая самостоятельность'],
+        rights: ['Взрослый счёт и карта', 'Сохранённая история и накопления', 'Продукты МТБанка без нового онбординга', 'Полная финансовая самостоятельность'],
         parent: 'Родительский контроль снимается автоматически.',
         child: 'Остаётся в знакомом Moby — уже как взрослый клиент.'
       }
@@ -107,7 +103,6 @@
         title: 'Снеки против цели',
         category: 'Твои деньги',
         duration: 3,
-        points: 10,
         icon: 'target',
         tone: 'red',
         tag: 'На реальных данных',
@@ -139,7 +134,6 @@
         title: 'Стоп, дроппер!',
         category: 'Безопасность',
         duration: 4,
-        points: 15,
         icon: 'shield',
         tone: 'navy',
         tag: 'Ветка защиты',
@@ -171,7 +165,6 @@
         title: 'Три банки',
         category: 'Привычки',
         duration: 3,
-        points: 10,
         icon: 'wallet',
         tone: 'blue',
         tag: 'Как устроен сплит',
@@ -203,7 +196,6 @@
         title: 'Невидимые подписки',
         category: 'Твои деньги',
         duration: 5,
-        points: 15,
         icon: 'refresh',
         tone: 'green',
         tag: 'Новая миссия',
@@ -242,6 +234,11 @@
         { id: 1, title: 'Spotify Premium', subtitle: 'Подписка · сегодня', amount: -9.90, icon: 'refresh', tone: 'green' },
         { id: 2, title: 'Перевод от папы', subtitle: 'Карманные · вчера', amount: 25.00, icon: 'send', tone: 'blue' },
         { id: 3, title: 'Кофейня', subtitle: 'Карта Moby · вчера', amount: -6.50, icon: 'coffee', tone: 'sand' }
+      ],
+      family: [
+        { id: 1, title: 'Оплата ЕРИП', subtitle: 'ШОППЕР · сегодня, 14:10', amount: -10.00, icon: 'card', tone: 'blue' },
+        { id: 2, title: 'Перевод от бабушки', subtitle: 'Маше в «Коплю» · вчера', amount: 10.00, icon: 'heart', tone: 'green' },
+        { id: 3, title: 'Перекрёсток', subtitle: 'Продукты · вчера', amount: -8.40, icon: 'bag', tone: 'sand' }
       ]
     },
 
@@ -268,7 +265,7 @@
     insightDismissed: false,
     freezes: { masha: 1, alex: 1 },
     missionsDone: { masha: ['pockets'], alex: ['pockets', 'dropper'] },
-    points: { masha: 140, alex: 235 },
+    assignedMissions: { masha: [], alex: [] },
     limits: {
       masha: { weekly: 70, online: 30, cash: 0, transfers: false },
       alex: { weekly: 150, online: 120, cash: 20, transfers: true }

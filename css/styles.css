@@ -2130,11 +2130,11 @@ a { color: inherit; }
 .econ-row--accent { border-bottom: 0; color: var(--red-600); }
 .econ-row--accent b { color: var(--red-600); }
 .econ-card > p { margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); color: var(--muted-2); font-size: 11px; line-height: 1.45; }
-.demo-scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-.demo-scenarios button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); text-align: left; }
-.demo-scenarios button > span { margin-bottom: 4px; }
-.demo-scenarios button b { color: var(--ink); font-size: 12px; font-weight: 700; }
-.demo-scenarios button i { color: var(--muted-2); font-style: normal; font-size: 11px; }
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.scenario-grid button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); text-align: left; }
+.scenario-grid button > span { margin-bottom: 4px; }
+.scenario-grid button b { color: var(--ink); font-size: 12px; font-weight: 700; }
+.scenario-grid button i { color: var(--muted-2); font-style: normal; font-size: 11px; }
 .install-page-hero { padding: 20px 16px; border-radius: 24px; text-align: center; background: radial-gradient(90% 80% at 50% 0%, #F5F9FF, #FFFFFF 65%); border: 1px solid var(--line); box-shadow: var(--shadow-card); }
 .install-page-hero__icon { width: 70px; height: 70px; margin: 0 auto 12px; border-radius: 20px; box-shadow: 0 16px 26px -16px rgba(7,27,61,0.5); }
 .install-page-hero h1 { margin: 5px auto 6px; max-width: 280px; color: var(--ink); font-size: 21px; line-height: 1.08; font-weight: 790; letter-spacing: -0.045em; }

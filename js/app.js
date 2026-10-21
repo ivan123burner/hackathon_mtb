@@ -1,4 +1,4 @@
-/* Moby Family — interactive PWA demo for MTBank / Space Hackathon. */
+/* Moby Family — interactive PWA for MTBank / Space Hackathon. */
 (function () {
   'use strict';
 
@@ -24,6 +24,7 @@
     topupChild: 'masha',
     topupPocket: 'spend',
     missionChild: 'masha',
+    assignChild: 'masha',
     lastRoute: null
   };
 
@@ -98,12 +99,11 @@
     var extra = (state.missionsDone[person.id] || []).filter(function (id) { return base.indexOf(id) === -1; }).length;
     return (person.done || 0) + extra;
   }
-  function brandMarkup(extraClass, withDemo) {
+  function brandMarkup(extraClass) {
     return '<div class="brand ' + (extraClass || '') + '">' +
       '<img class="brand__mark" src="assets/icons/icon.svg" alt="">' +
       '<span class="brand__word">moby</span>' +
       '<span class="brand__family">family</span>' +
-      (withDemo ? '<span class="brand__demo">demo</span>' : '') +
       '</div>';
   }
   function topActions() {
@@ -193,24 +193,6 @@
       '<div class="goal-ring__center"><strong>' + progress + '%</strong><span>цели</span></div>' +
       '</div>';
   }
-  function weekStrip(active) {
-    return '<div class="week-strip">' + D.week.map(function (day, i) {
-      var cls = day.done ? 'is-done' : '';
-      if (i === 6 && active) cls += ' is-today';
-      return '<span class="week-day ' + cls + '"><i>' + (day.done ? icon('check', 11) : i === 6 ? icon('flame', 12) : '') + '</i><b>' + day.d + '</b></span>';
-    }).join('') + '</div>';
-  }
-  function seriesBanner(person) {
-    var left = state.freezes[person.id] == null ? 1 : state.freezes[person.id];
-    return '<div class="series-banner">' +
-      '<span class="series-banner__flame">' + icon('flame', 19) + '</span>' +
-      '<span class="series-banner__text"><b>' + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' подряд</b>' +
-        '<span>+0,5% к ставке за серию</span></span>' +
-      '<button class="freeze-btn" type="button" data-action="freeze-streak" data-child="' + person.id + '" ' + (left ? '' : 'disabled') + ' aria-label="Заморозить серию">' +
-        icon('snowflake', 17) + '<span>' + left + '</span>' +
-      '</button>' +
-      '</div>';
-  }
   function stageBadge(person) {
     return '<span class="stage-badge stage-badge--' + (person.stage || 'base') + '">' + esc(person.stageLabel || '') + '</span>';
   }
@@ -230,7 +212,6 @@
         '<div class="goal-card__numbers">' +
           '<strong>' + fmt(goal.saved) + ' <small>из ' + fmt(goal.target) + ' BYN</small></strong>' +
           '<p>Осталось ' + fmt(remaining) + ' BYN</p>' +
-          (options.hideStreak ? '' : '<span class="goal-card__streak">' + icon('flame', 15) + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' в серии</span>') +
         '</div>' +
       '</div>' +
       (options.footer === false ? '' :
@@ -294,7 +275,7 @@
       });
       merged.freezes = Object.assign(deepClone(def.freezes), saved.freezes || {});
       merged.missionsDone = Object.assign(deepClone(def.missionsDone), saved.missionsDone || {});
-      merged.points = Object.assign(deepClone(def.points), saved.points || {});
+      merged.assignedMissions = Object.assign(deepClone(def.assignedMissions), saved.assignedMissions || {});
       if (VALID_ROLES.indexOf(merged.role) === -1) merged.role = null;
       if (['masha', 'alex'].indexOf(merged.activeChild) === -1) merged.activeChild = 'masha';
       return merged;
@@ -316,7 +297,6 @@
     saveState();
     syncUrlRole(role);
     render(true);
-    setTimeout(function () { toast('Демо: вы вошли как ' + roleLabel(role), { icon: 'users' }); }, 300);
   }
 
   /* ------------------------------------------------------------------ */
@@ -332,6 +312,7 @@
     var gift = params.get('gift');
     var invite = params.get('invite');
     var role = params.get('role');
+    var fromQr = params.get('source') === 'qr' || params.get('welcome') === '1';
 
     if (gift && D.people[gift] && (gift === 'masha' || gift === 'alex')) {
       ui.mode = 'gift';
@@ -340,11 +321,11 @@
     } else if (invite) {
       ui.mode = 'invite';
     } else {
-      if (VALID_ROLES.indexOf(role) !== -1) {
+      if (!fromQr && VALID_ROLES.indexOf(role) !== -1) {
         state.role = role;
         saveState();
       }
-      ui.mode = state.role ? 'app' : 'welcome';
+      ui.mode = fromQr ? 'welcome' : (state.role ? 'app' : 'welcome');
     }
     if (state.role === 'masha' || state.role === 'alex') state.activeChild = state.role;
     ui.qrTab = state.role === 'parent' ? 'app' : 'gift';
@@ -543,9 +524,7 @@
     return '<section class="welcome">' +
       '<div class="welcome__noise" aria-hidden="true"></div>' +
       '<div class="welcome__orbs" aria-hidden="true"><span></span><span></span></div>' +
-      '<header class="welcome__top">' + brandMarkup('brand--light') +
-        '<span class="demo-pill"><i></i>demo</span>' +
-      '</header>' +
+      '<header class="welcome__top">' + brandMarkup('brand--light') + '</header>' +
       '<div class="welcome__hero">' +
         '<div class="welcome__art">' +
           '<img src="assets/img/whale-hero.svg" alt="Кит Moby" class="welcome__whale">' +
@@ -556,7 +535,6 @@
         '<div class="welcome__copy">' +
           '<span class="welcome__eyebrow">' + (invite ? 'Приглашение в семью' : 'МТБанк · семейный банкинг') + '</span>' +
           '<h1>' + (invite ? 'Тебя пригласили<br>в Moby Family' : 'Первые деньги,<br>которые не теряются.') + '</h1>' +
-          '<p>' + (invite ? 'Анна приглашает тебя в семейный банкинг. Вход — по ПИН-коду или биометрии, без отдельного детского приложения.' : 'Карта и приложение, которые растут вместе с ребёнком. Права открываются возрастом, а не тарифом.') + '</p>' +
         '</div>' +
         '<div class="welcome__promise">' +
           '<div class="welcome__promise-head"><span>Один Moby для семьи</span><b>7 — 18 лет</b></div>' +
@@ -588,14 +566,6 @@
             avatar('alex', 34) + '<span><b>Алекс</b><i>16 лет</i></span>' + icon('chevron-right', 14) +
           '</button>' +
         '</div>' +
-        '<button class="welcome__gift-link" type="button" data-action="open-gift" data-child="masha">' +
-          icon('gift', 16) + 'Подарить по ссылке' + icon('arrow-up-right', 14) +
-        '</button>' +
-      '</div>' +
-      '<div class="welcome__proof">' +
-        '<span class="welcome__proof-badge">+30</span>' +
-        '<p><b>баллов финграмотности</b><br>за самостоятельность и обсуждение трат</p>' +
-        '<span class="welcome__proof-mark">PISA</span>' +
       '</div>' +
       '<footer class="welcome__foot">' +
         '<span>Space Hackathon · МТБанк</span>' +
@@ -610,6 +580,8 @@
 
   function renderParentHome() {
     var family = D.family;
+    var masha = D.people.masha;
+    var alex = D.people.alex;
 
     return '<section class="screen home home--v2">' +
       '<header class="hero hero--parent">' +
@@ -636,11 +608,12 @@
       '</header>' +
       '<div class="content">' +
         (!state.insightDismissed ? insightCard() : '') +
-        '<section class="section history-section">' +
-          sectionHead('История') +
-          '<div class="tx-card tx-card--compact">' + D.transactions.masha.slice(0, 2).map(txRow).join('') + D.transactions.alex.slice(0, 1).map(txRow).join('') + '</div>' +
-        '</section>' +
+        historyShortcut() +
         packageCard() +
+        '<section class="section">' +
+          sectionHead('Счета детей', linkButton('Семья', 'navigate', 'data-to="family"'), '2') +
+          '<div class="kids-grid">' + kidCard(masha) + kidCard(alex) + '</div>' +
+        '</section>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -650,6 +623,19 @@
     return '<button class="quick' + (action ? '' : ' quick--static') + '" type="button" ' + (action ? 'data-action="' + action + '"' : 'aria-disabled="true"') + '>' +
       '<span class="quick__icon">' + icon(ic, 20) + '</span>' +
       '<span class="quick__label">' + label + '</span>' +
+      '</button>';
+  }
+
+  function historyShortcut() {
+    var tx = (D.transactions.family && D.transactions.family[0]) || D.transactions.masha[0];
+    return '<button class="history-shortcut" type="button" data-action="open-sheet" data-sheet="history">' +
+      '<span class="history-shortcut__icon">' + icon('clock', 22) + '</span>' +
+      '<span class="history-shortcut__body">' +
+        '<b>История операций</b>' +
+        '<span>' + esc(tx.title) + ' · ' + esc(tx.subtitle.split(' · ')[0]) + '</span>' +
+      '</span>' +
+      '<span class="history-shortcut__amount">' + (tx.amount > 0 ? '+' : '−') + fmt(Math.abs(tx.amount)) + ' <small>BYN</small></span>' +
+      '<span class="history-shortcut__check">' + icon('check', 13) + '</span>' +
       '</button>';
   }
 
@@ -678,7 +664,7 @@
       '<div class="insight-card__body">' +
         '<span class="kicker kicker--red"><i></i>Moby подсказывает</span>' +
         '<h3>Маше 9 — пора платить онлайн?</h3>' +
-        '<p>Дети её возраста уже расплачиваются в интернете. Исследования PISA: самостоятельность вместе с обсуждением трат дают <b>+30 баллов</b> финграмотности.</p>' +
+        '<p>Дети её возраста уже расплачиваются в интернете. Исследования PISA: самостоятельность вместе с обсуждением трат помогают финансовой грамотности.</p>' +
         '<div class="insight-card__actions">' +
           '<button class="btn btn--red btn--xs" type="button" data-action="open-limits" data-child="masha">Настроить лимит</button>' +
           '<button class="text-btn" type="button" data-action="dismiss-insight">Позже</button>' +
@@ -696,7 +682,6 @@
         '<b class="mission-card__title">' + esc(mission.title) + '</b>' +
         '<span class="mission-card__text">' + esc(mission.lead) + '</span>' +
         '<span class="mission-card__meta">' +
-          '<span class="mission-card__points">+' + mission.points + ' баллов</span>' +
           '<span class="mission-card__play">Начать ' + icon('play', 12) + '</span>' +
         '</span>' +
       '</span>' +
@@ -713,7 +698,7 @@
     var limit = state.limits[person.id] || person.limit;
     var spent = limit.spent == null ? person.limit.spent : limit.spent;
     var limitPct = pct(spent, limit.weekly);
-    var featured = isTeen ? 'dropper' : 'snacks';
+    var featured = isTeen ? 'subscriptions' : 'snacks';
 
     return '<section class="screen home home--kid ' + (isTeen ? 'is-teen' : '') + '">' +
       '<header class="hero ' + (isTeen ? 'hero--teen' : 'hero--child') + '">' +
@@ -732,11 +717,9 @@
         '</div>' +
       '</header>' +
       '<div class="content">' +
-        (isTeen ? teenRightsCard() : '') +
         '<section class="section">' +
-          goalCard(person, { label: isTeen ? 'Цель накопления' : 'Моя цель', hideStreak: true }) +
+          goalCard(person, { label: isTeen ? 'Цель накопления' : 'Моя цель' }) +
         '</section>' +
-        seriesBanner(person) +
         '<section class="section">' +
           sectionHead('Миссии', linkButton('Все', 'navigate', 'data-to="missions"')) +
           missionTeaser(featured, person) +
@@ -803,8 +786,12 @@
         '</section>' +
 
         '<section class="section">' +
-          sectionHead('Миссии', linkButton('Все миссии', 'navigate', 'data-to="missions"')) +
-          missionTeaser('snacks', people.masha) +
+          sectionHead('Миссии') +
+          '<button class="assign-missions" type="button" data-action="open-sheet" data-sheet="assign-missions">' +
+            '<span class="assign-missions__icon">' + icon('sparkles', 22) + '</span>' +
+            '<span class="assign-missions__body"><b>Добавить миссии</b><span>Назначьте задание Маше или Алексу</span></span>' +
+            icon('chevron-right', 18) +
+          '</button>' +
         '</section>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
@@ -815,61 +802,54 @@
   /* Миссии                                                              */
   /* ------------------------------------------------------------------ */
 
+  function missionCategoryCard(tone, title, text, ic, attrs, badge) {
+    return '<button class="mission-category mission-category--' + tone + '" type="button" ' + (attrs || '') + '>' +
+      '<span class="mission-category__icon">' + icon(ic, 22) + '</span>' +
+      '<span class="mission-category__body"><b>' + title + '</b><span>' + text + '</span></span>' +
+      (badge != null ? '<span class="mission-category__badge">' + badge + '</span>' : '') +
+      icon('chevron-right', 17) +
+      '</button>';
+  }
+
   function renderMissions(param) {
     var isParent = state.role === 'parent';
     var selectedId = isParent ? (param === 'masha' || param === 'alex' ? param : (state.activeChild || 'masha')) : state.role;
     var person = childFor(selectedId);
-    var points = state.points[selectedId] || 0;
     var done = state.missionsDone[selectedId] || [];
     var doneTotal = doneCount(person);
-    var featured = D.missions.filter(function (m) { return done.indexOf(m.id) === -1; })[0] || D.missions[0];
+    var available = D.missions.filter(function (mission) { return done.indexOf(mission.id) === -1; }).length;
+    var assignedCount = (state.assignedMissions[selectedId] || []).length;
 
     return '<section class="screen page page--missions">' +
       subHeader('Миссии', {
-        eyebrow: isParent ? 'Прогресс семьи' : '3–5 минут · на твоих данных',
+        eyebrow: isParent ? 'Прогресс семьи' : 'Задания для тебя',
         action: '<button class="icon-btn icon-btn--soft" type="button" data-action="open-sheet" data-sheet="about" aria-label="О миссиях">' + icon('info', 19) + '</button>'
       }) +
       '<div class="page__body">' +
         '<div class="missions-hero">' +
           '<div class="missions-hero__glow" aria-hidden="true"></div>' +
           '<div class="missions-hero__head"><span class="kicker kicker--light">Обучение Moby</span><img src="assets/img/whale-hero.svg" alt="" class="missions-hero__whale"></div>' +
-          '<h2>' + (isParent ? 'Учимся на реальных данных' : 'Твоя следующая миссия') + '</h2>' +
-          '<p>' + (isParent ? 'Moby превращает реальные траты и цели детей в короткие игры. Родитель видит прогресс, ребёнок — смысл.' : 'Короткие задания о деньгах, безопасности и привычках. Без скучных лекций.') + '</p>' +
-          '<div class="missions-stats">' +
+          '<h2>' + (isParent ? 'Прогресс детей' : 'Твои задания') + '</h2>' +
+          '<p>' + (isParent ? 'Moby превращает реальные траты и цели детей в короткие игры. Родитель видит прогресс, ребёнок — смысл.' : 'Короткие задания о деньгах и безопасности. Без скучных лекций.') + '</p>' +
+          '<div class="missions-stats missions-stats--two">' +
             '<div><b>' + doneTotal + '</b><span>миссий пройдено</span></div>' +
-            '<div><b>' + points + '</b><span>баллов Moby</span></div>' +
-            '<div><b>' + person.streak + '</b><span>дней в серии</span></div>' +
+            '<div><b>' + available + '</b><span>доступно миссий</span></div>' +
           '</div>' +
           (isParent ? '<div class="mission-select">' +
             '<button class="' + (selectedId === 'masha' ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="missions" data-param="masha">' + avatar('masha', 24) + 'Маша</button>' +
             '<button class="' + (selectedId === 'alex' ? 'is-active' : '') + '" type="button" data-action="navigate" data-to="missions" data-param="alex">' + avatar('alex', 24) + 'Алекс</button>' +
           '</div>' : '') +
         '</div>' +
-        (isParent ? '<p class="demo-note">' + icon('info', 13) + 'Демо-прохождение идёт за ' + person.name + '. В продукте миссии открываются в детском профиле.</p>' : '') +
 
-        '<button class="featured-mission" type="button" data-action="open-mission" data-mission="' + featured.id + '" data-child="' + selectedId + '">' +
-          '<span class="featured-mission__top"><span class="mission-cat">' + icon(featured.icon, 15) + esc(featured.category) + '</span><span class="featured-mission__time">' + featured.duration + ' мин</span></span>' +
-          '<span class="featured-mission__title">' + esc(featured.title) + '</span>' +
-          '<span class="featured-mission__text">' + esc(featured.lead) + '</span>' +
-          '<span class="featured-mission__bottom"><span class="featured-mission__points">+' + featured.points + ' баллов Moby</span><span class="featured-mission__play">Пройти ' + icon('play', 13) + '</span></span>' +
-        '</button>' +
 
-        '<section class="section">' +
-          sectionHead('Все миссии', '<span class="head-hint">' + doneTotal + ' из 12</span>') +
-          '<div class="mission-list">' + D.missions.map(function (mission) {
-            var isDone = done.indexOf(mission.id) !== -1;
-            return '<button class="mission-row mission-row--' + mission.tone + ' ' + (isDone ? 'is-done' : '') + '" type="button" data-action="open-mission" data-mission="' + mission.id + '" data-child="' + selectedId + '">' +
-              '<span class="mission-row__icon">' + icon(mission.icon, 21) + '</span>' +
-              '<span class="mission-row__body"><span class="mission-row__cat">' + esc(mission.category) + ' · ' + mission.duration + ' мин</span><b>' + esc(mission.title) + '</b><span class="mission-row__text">' + esc(mission.lead) + '</span></span>' +
-              '<span class="mission-row__right">' + (isDone ? '<i class="mission-done-tick">' + icon('check', 13) + '</i>' : '<i class="mission-points">+' + mission.points + '</i>') + '<span>' + (isDone ? 'Пройдено' : 'Начать') + '</span></span>' +
-              '</button>';
-          }).join('') + '</div>' +
-        '</section>' +
-
-        '<div class="mission-locked">' +
-          '<span class="mission-locked__icon">' + icon('lock', 18) + '</span>' +
-          '<span><b>Скоро: Инфляция и мороженое</b><i>Новая миссия откроется в ноябре</i></span>' +
-          '<span class="mission-locked__chip">Уровень 2</span>' +
+        '<div class="mission-categories">' +
+          missionCategoryCard('parent', 'Задания от родителя', 'Личные задания от мамы', 'users', 'data-action="open-sheet" data-sheet="parent-missions" data-child="' + selectedId + '"', assignedCount || null) +
+          missionCategoryCard('moby', 'Задания от Moby', 'Финансы и безопасность', 'sparkles', 'data-action="open-sheet" data-sheet="moby-missions" data-child="' + selectedId + '"', available) +
+          '<div class="mission-category mission-category--partners" aria-disabled="true">' +
+            '<span class="mission-category__icon">' + icon('gift', 22) + '</span>' +
+            '<span class="mission-category__body"><b>Задания от партнёров</b><span>Скоро: задания от любимых брендов</span></span>' +
+            '<span class="mission-category__badge">Скоро</span>' +
+          '</div>' +
         '</div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
@@ -895,8 +875,8 @@
         title: 'Семейный банкинг в одном QR',
         text: 'Наведите камеру телефона — Moby Family откроется в браузере. Установка не нужна.',
         url: urls.app,
-        eyebrow: 'PWA · демо',
-        linkLabel: 'Скопировать ссылку на демо'
+        eyebrow: 'PWA · Moby Family',
+        linkLabel: 'Скопировать ссылку'
       },
       gift: {
         title: 'Подарить ' + dativeName(giftChild.name) + ' без Moby',
@@ -949,14 +929,14 @@
         '</div>' +
         (publicLink ? '<p class="qr-wifi-note">' + icon('share', 14) + 'QR ведёт на публичную версию — откроется с любого устройства и в любой сети.</p>' : '') +
         (localLan ? '<p class="qr-wifi-note">' + icon('wifi', 14) + 'Телефон и ноутбук должны быть в одной Wi-Fi сети.</p>' : '') +
-        (isLocalNoLan ? '<p class="qr-note">' + icon('info', 14) + 'Для сканирования с телефона запустите <b>npm start</b> и откройте демо по сетевому адресу — QR подставится автоматически.</p>' : '') +
+        (isLocalNoLan ? '<p class="qr-note">' + icon('info', 14) + 'Для сканирования с телефона запустите <b>npm start</b> и откройте приложение по сетевому адресу — QR подставится автоматически.</p>' : '') +
         (tab === 'app' ?
           '<div class="install-banner">' +
             '<span class="install-banner__icon">' + icon('install', 23) + '</span>' +
             '<span><b>Сохранить на экран «Домой»</b><i>Moby Family откроется как приложение и будет работать офлайн</i></span>' +
             '<button class="btn btn--red btn--xs" type="button" data-install>Установить</button>' +
           '</div>' : '') +
-        '<p class="qr-legal">Демо-ссылка. Все данные вымышлены. В продукте ссылки подписываются и действуют ограниченное время.</p>' +
+        '<p class="qr-legal">Все данные вымышлены. В продукте ссылки подписываются и действуют ограниченное время.</p>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -969,7 +949,6 @@
   function renderMore() {
     var person = currentPerson();
     var isParent = state.role === 'parent';
-    var version = String(window.MOBY_CONFIG.version || '').replace(/-demo$/, '');
     return '<section class="screen page page--more">' +
       subHeader('Ещё', { eyebrow: 'Профиль и настройки' }) +
       '<div class="page__body">' +
@@ -977,7 +956,6 @@
           '<div class="profile-card__pattern" aria-hidden="true"></div>' +
           '<div class="profile-card__avatar">' + avatar(person.avatar || 'anna', 58) + '<span>' + (isParent ? 'owner' : 'kid') + '</span></div>' +
           '<div class="profile-card__text"><span class="kicker kicker--light">' + roleLabel(state.role) + '</span><h2>' + person.fullName + '</h2><p>' + (isParent ? 'Владелец семейного пакета' : person.stageLabel || 'Участник семьи') + '</p></div>' +
-          '<button class="btn btn--glass btn--xs" type="button" data-action="role-sheet">Сменить роль</button>' +
         '</div>' +
 
         (!isParent ? '<section class="section">' +
@@ -993,10 +971,8 @@
               '<span class="badge-glass"><i class="dot dot--green"></i>активен</span>' +
             '</div>' +
             '<div class="package-card__price"><strong>' + fmt(D.family.currentPrice) + '</strong><span>BYN / месяц</span></div>' +
-            '<div class="package-card__stats">' +
+            '<div class="package-card__stats package-card__stats--single">' +
               '<div><b>2</b><span>ребёнка</span></div>' +
-              '<div><b>2 из 3</b><span>условий</span></div>' +
-              '<div><b>1 ноя</b><span>списание</span></div>' +
             '</div>' +
             '<div class="package-card__bar"><span style="width:66%"></span></div>' +
             '<div class="package-card__chips"><span>Оборот по карте</span><span>Остаток или цель</span><span>Миссия</span></div>' +
@@ -1005,18 +981,18 @@
         '</section>' : '') +
 
         '<div class="more-menu">' +
-          moreRow('id-card', 'Персональные данные', 'blue', 'data-action="demo-info" data-title="Персональные данные"') +
-          moreRow('document', 'Документы', 'blue', 'data-action="demo-info" data-title="Документы"') +
+          (!isParent ? moreRow('ruler', 'Симулятор возраста', 'blue', 'data-action="navigate" data-to="age"') : '') +
+          moreRow('id-card', 'Персональные данные', 'blue', 'data-action="feature-info" data-title="Персональные данные"') +
+          moreRow('document', 'Документы', 'blue', 'data-action="feature-info" data-title="Документы"') +
           moreRow('bell', 'Уведомления', 'blue', 'data-action="notifications"') +
-          moreRow('currency', 'Курсы валют', 'blue', 'data-action="demo-info" data-title="Курсы валют"') +
-          moreRow('star', 'Манички. Вход в программу приятностей', 'white', 'data-action="demo-info" data-title="Манички"') +
-          moreRow('refresh', 'Обменник Moby', 'pink', 'data-action="demo-info" data-title="Обменник Moby"') +
-          moreRow('pin', 'Банк на карте', 'blue', 'data-action="demo-info" data-title="Банк на карте"') +
-          moreRow('bank', 'О банке', 'blue', 'data-action="demo-info" data-title="О банке"') +
+          moreRow('currency', 'Курсы валют', 'blue', 'data-action="feature-info" data-title="Курсы валют"') +
+          moreRow('star', 'Манички. Вход в программу приятностей', 'white', 'data-action="feature-info" data-title="Манички"') +
+          moreRow('refresh', 'Обменник Moby', 'pink', 'data-action="feature-info" data-title="Обменник Moby"') +
+          moreRow('pin', 'Банк на карте', 'blue', 'data-action="feature-info" data-title="Банк на карте"') +
+          moreRow('bank', 'О банке', 'blue', 'data-action="feature-info" data-title="О банке"') +
           moreRow('shield', 'Ваша безопасность', 'blue', 'data-action="open-sheet" data-sheet="legal"') +
         '</div>' +
 
-        '<div class="more-version">Версия приложения ' + esc(version) + '</div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1069,7 +1045,7 @@
 
         '<div class="legal-strip"><span>' + icon(isTeen ? 'shield' : 'info', 18) + '</span><div><b>' + legalTitle + '</b><p>' + legalText + '</p></div></div>' +
 
-        '<section class="section">' + goalCard(person, { label: 'Цель' }) + seriesBanner(person) + '</section>' +
+        '<section class="section">' + goalCard(person, { label: 'Цель' }) + '</section>' +
 
         '<section class="section">' +
           sectionHead('Родительские правила', linkButton('Изменить', 'open-limits', 'data-child="' + person.id + '"')) +
@@ -1081,11 +1057,10 @@
         '</section>' +
 
         '<section class="section">' +
-          sectionHead('Миссии и серия') +
+          sectionHead('Миссии') +
           '<button class="progress-card" type="button" data-action="navigate" data-to="missions" data-param="' + person.id + '">' +
             '<span class="progress-card__icon">' + icon('sparkles', 21) + '</span>' +
             '<span class="progress-card__text"><b>' + doneCount(person) + ' из 12 миссий</b><span>Следующая: «Снеки против цели»</span></span>' +
-            '<span class="progress-card__streak">' + icon('flame', 14) + person.streak + '</span>' +
           '</button>' +
         '</section>' +
 
@@ -1147,12 +1122,12 @@
         '</div>' +
         '<div class="hint-card">' +
           '<span class="hint-card__icon">' + icon('sparkles', 18) + '</span>' +
-          '<div><b>Moby подсказывает</b><p>По PISA самостоятельность + обсуждение трат дают +30 баллов финграмотности. Попробуйте расширить лимит и включить миссию про онлайн-покупки.</p></div>' +
+          '<div><b>Moby подсказывает</b><p>По PISA самостоятельность вместе с обсуждением трат помогает финансовой грамотности. Попробуйте расширить лимит и включить миссию про онлайн-покупки.</p></div>' +
         '</div>' +
         (editable ?
           '<button class="btn btn--red btn--block save-limits" type="button" data-action="save-limits" data-child="' + person.id + '">Сохранить правила</button>' :
           '<button class="btn btn--soft btn--block" type="button" data-action="request-limit">Попросить маму изменить</button>') +
-        '<p class="sheet__note page-note">' + icon('lock', 13) + 'Изменения сохраняются в демо-состоянии. В продукте — с подтверждением родителя по биометрии.</p>' +
+        '<p class="sheet__note page-note">' + icon('lock', 13) + 'Изменения сохраняются. В продукте — с подтверждением родителя по биометрии.</p>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1169,28 +1144,24 @@
     var progress = pct(saved, goal.target);
     var left = state.freezes[person.id] == null ? 1 : state.freezes[person.id];
     return '<section class="screen page page--savings">' +
-      subHeader('Копилка', { eyebrow: 'Цель и серия', back: 'home' }) +
+      subHeader('Копилка', { eyebrow: 'Цель и накопления', back: 'home' }) +
       '<div class="page__body">' +
         '<div class="savings-hero">' +
           '<div class="savings-hero__glow" aria-hidden="true"></div>' +
-          '<div class="savings-hero__head"><span class="kicker kicker--light">Моя цель</span><span class="flame-pill">' + icon('flame', 15) + person.streak + '</span></div>' +
+          '<div class="savings-hero__head"><span class="kicker kicker--light">Моя цель</span></div>' +
           '<div class="savings-hero__main">' +
             goalRing(progress) +
             '<div><h2>' + esc(goal.name) + '</h2><strong>' + fmt(saved) + ' <small>из ' + fmt(goal.target) + ' BYN</small></strong><p>Осталось ' + fmt(Math.max(0, goal.target - saved)) + ' BYN</p></div>' +
           '</div>' +
-          '<div class="savings-hero__rate"><span>' + icon('chart', 15) + 'Ставка <b>' + goal.rate.toString().replace('.', ',') + '%</b> годовых</span><span>+0,5% за серию</span></div>' +
+          '<div class="savings-hero__rate"><span>' + icon('chart', 15) + 'Ставка <b>' + goal.rate.toString().replace('.', ',') + '%</b> годовых</span><span>+0,5% за регулярность</span></div>' +
           '<button class="btn btn--red btn--block" type="button" data-action="open-topup" data-child="' + person.id + '" data-pocket="save">Пополнить копилку ' + icon('plus', 15) + '</button>' +
         '</div>' +
-        '<article class="series-full">' +
-          '<div class="series-full__head"><div><span class="kicker kicker--red">Серия накоплений</span><h3>' + person.streak + ' ' + plural(person.streak, ['день', 'дня', 'дней']) + ' подряд</h3></div><span class="flame-pill flame-pill--light">' + icon('flame', 15) + '+' + (0.5).toString().replace('.', ',') + '%</span></div>' +
-          weekStrip(true) +
-          '<div class="series-full__foot"><span>Пополняй копилку каждый день — ставка растёт.</span><button class="freeze-btn freeze-btn--large" type="button" data-action="freeze-streak" data-child="' + person.id + '" ' + (left ? '' : 'disabled') + '>' + icon('snowflake', 15) + 'Заморозка · ' + left + '</button></div>' +
-        '</article>' +
+
         '<section class="section">' +
           sectionHead('Как растёт ставка') +
           '<div class="rate-ladder">' +
             '<div class="rate-row"><span>Базовая ставка</span><b>3,0%</b></div>' +
-            '<div class="rate-row is-active"><span>Серия 7+ дней</span><b>+0,5%</b></div>' +
+            '<div class="rate-row is-active"><span>Регулярность 7+ дней</span><b>+0,5%</b></div>' +
             '<div class="rate-row"><span>Цель выполнена</span><b>+0,5%</b></div>' +
             '<p>Ставка пересчитывается каждый день. Одна заморозка в квартал сохраняет серию, если пропустил пополнение.</p>' +
           '</div>' +
@@ -1252,7 +1223,7 @@
             '<div><span>' + icon('ruler', 19) + '</span><b>Под правилами</b><i>Лимиты и уведомления в Moby</i></div>' +
           '</div>' +
         '</section>' +
-        '<div class="legal-strip"><span>' + icon('info', 18) + '</span><div><b>' + (isTeen ? 'Карта на имя подростка' : 'Браслет на имя ребёнка') + '</b><p>В демо выпуск не подключён к реальной логистике. В продукте — заказ из Moby и доставка курьером.</p></div></div>' +
+        '<div class="legal-strip"><span>' + icon('info', 18) + '</span><div><b>' + (isTeen ? 'Карта на имя подростка' : 'Браслет на имя ребёнка') + '</b><p>Выпуск карты или браслета оформляется в Moby. В продукте — заказ из Moby и доставка курьером.</p></div></div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1301,7 +1272,7 @@
           '<p class="age-detail__lead" id="ageLead">' + stage.lead + '</p>' +
           '<ul class="age-rights" id="ageRights">' + stageRightsMarkup(stage) + '</ul>' +
           '<div class="age-notes"><div><b>Родитель</b><span id="ageParentNote">' + stage.parent + '</span></div><div><b>' + (stage.id === 'adult' ? 'Человек' : 'Ребёнок') + '</b><span id="ageChildNote">' + stage.child + '</span></div></div>' +
-          '<div id="ageCta">' + (stage.id === 'adult' ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии демо доступны профили детей 7–17 лет.</p>' : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>') + '</div>' +
+          '<div id="ageCta">' + (stage.id === 'adult' ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии доступны профили детей 7–17 лет.</p>' : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>') + '</div>' +
         '</div>' +
         '<section class="section">' +
           sectionHead('Три этапа') +
@@ -1313,7 +1284,7 @@
               '</button>';
           }).join('') + '</div>' +
         '</section>' +
-        '<div class="age-legal-note">' + icon('shield', 16) + 'Юридическая логика: субсчёт по Инструкции НБ №34, собственный счёт с 14 лет по ст. 25 ГК РБ, автопереход в 18. Демо-формулировки упрощены.</div>' +
+        '<div class="age-legal-note">' + icon('shield', 16) + 'Юридическая логика: субсчёт по Инструкции НБ №34, собственный счёт с 14 лет по ст. 25 ГК РБ, автопереход в 18. Формулировки упрощены.</div>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1341,7 +1312,7 @@
             '<div><span>' + icon('ruler', 19) + '</span><b>Возраст вместо тарифа</b><p>Субсчёт по Инструкции НБ №34, свой счёт с 14 лет по ст. 25 ГК РБ, автопереход в 18.</p></div>' +
             '<div><span>' + icon('wallet', 19) + '</span><b>Три банки</b><p>Автосплит 70/20/10 в момент зачисления. Привычка формируется без ручных переводов.</p></div>' +
             '<div><span>' + icon('sparkles', 19) + '</span><b>Инверсия контроля</b><p>Банк сам предлагает родителю следующий шаг самостоятельности на основе возраста, данных и PISA.</p></div>' +
-            '<div><span>' + icon('flame', 19) + '</span><b>Серия как в Duolingo</b><p>Ставка растёт за регулярность. Одна заморозка в квартал, чтобы привычка не ломалась.</p></div>' +
+            '<div><span>' + icon('chart', 19) + '</span><b>Накопления с целью</b><p>Регулярные пополнения растят ставку и помогают дойти до цели.</p></div>' +
           '</div>' +
         '</section>' +
         '<section class="section">' +
@@ -1355,8 +1326,8 @@
           '</div>' +
         '</section>' +
         '<section class="section">' +
-          sectionHead('Демо-сценарии') +
-          '<div class="demo-scenarios">' +
+          sectionHead('Сценарии') +
+          '<div class="scenario-grid">' +
             '<button type="button" data-action="switch-role" data-role="parent"><span>' + avatar('anna', 34) + '</span><b>Родитель</b><i>Лимиты, подсказки, семья</i></button>' +
             '<button type="button" data-action="switch-role" data-role="masha"><span>' + avatar('masha', 34) + '</span><b>Маша, 9</b><i>Субсчёт и цель</i></button>' +
             '<button type="button" data-action="switch-role" data-role="alex"><span>' + avatar('alex', 34) + '</span><b>Алекс, 16</b><i>Свой счёт</i></button>' +
@@ -1390,8 +1361,8 @@
           '<div><span>3</span><b>Готово</b><p>Иконка Moby Family появится рядом с другими приложениями.</p></div>' +
         '</div>' +
         '<div class="install-qr"><div data-qr-url="' + esc(urls.app) + '"></div><span><b>Или отсканируйте QR</b><i>Откроется в браузере телефона</i></span></div>' +
-        (!window.isSecureContext ? '<p class="qr-legal">Установка PWA работает по HTTPS. Локальное демо по Wi-Fi открывается в браузере без установки.</p>' : '') +
-        '<p class="qr-legal">Установка не требует App Store или Google Play. В демо PWA-режим полностью функционален.</p>' +
+        (!window.isSecureContext ? '<p class="qr-legal">Установка PWA работает по HTTPS. Локальная версия по Wi-Fi открывается в браузере без установки.</p>' : '') +
+        '<p class="qr-legal">Установка не требует App Store или Google Play. PWA-режим полностью функционален.</p>' +
         '<div class="tabbar-spacer"></div>' +
       '</div>' +
       '</section>';
@@ -1430,7 +1401,7 @@
     if (parentNote) parentNote.textContent = stage.parent;
     if (childNote) childNote.textContent = stage.child;
     if (cta) cta.innerHTML = stage.id === 'adult'
-      ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии демо доступны профили детей 7–17 лет.</p>'
+      ? '<p class="age-hint">' + icon('sparkles', 15) + 'В этой версии доступны профили детей 7–17 лет.</p>'
       : '<p class="age-hint">' + icon('sparkles', 15) + 'Продолжайте двигать ползунок — права откроются автоматически.</p>';
     $$('.stage-card').forEach(function (card) {
       card.classList.toggle('is-current', card.getAttribute('data-stage-card') === stage.id);
@@ -1494,7 +1465,8 @@
     return {
       roles: 'Сменить роль', notifications: 'Уведомления', about: 'О проекте', legal: 'Юридическая база',
       install: 'Установить приложение', topup: 'Пополнить', transfer: 'Перевод', pocket: 'Карманы',
-      invite: 'Пригласить в семью', member: 'Участник семьи', reset: 'Сбросить демо', gift: 'Ссылка-подарок'
+      invite: 'Пригласить в семью', member: 'Участник семьи', reset: 'Сбросить данные', gift: 'Ссылка-подарок',
+      history: 'История операций', 'assign-missions': 'Добавить миссии', 'moby-missions': 'Задания от Moby', 'parent-missions': 'Задания от родителя'
     }[type] || 'Moby Family';
   }
 
@@ -1505,6 +1477,14 @@
       '<button class="icon-btn icon-btn--soft" type="button" data-action="close-sheet" aria-label="Закрыть">' + icon('close', 20) + '</button></div>';
   }
 
+  function missionSheetRow(mission, childId, isDone) {
+    return '<button class="mission-sheet-row ' + (isDone ? 'is-done' : '') + '" type="button" data-action="open-mission" data-mission="' + mission.id + '" data-child="' + childId + '">' +
+      '<span class="mission-sheet-row__icon">' + icon(mission.icon, 19) + '</span>' +
+      '<span class="mission-sheet-row__body"><b>' + esc(mission.title) + '</b><span>' + esc(mission.category) + ' · ' + mission.duration + ' мин</span></span>' +
+      '<span class="mission-sheet-row__action">' + (isDone ? 'Пройдено' : 'Начать') + '</span>' +
+      '</button>';
+  }
+
   function sheetContent(type, data) {
     if (type === 'roles') {
       var roles = [
@@ -1512,7 +1492,7 @@
         { id: 'masha', title: 'Маша, 9', text: 'Субсчёт, цель и родительские правила', person: 'masha' },
         { id: 'alex', title: 'Алекс, 16', text: 'Свой счёт и правила вместо разрешений', person: 'alex' }
       ];
-      return sheetHead('Смотреть как', 'Демо-режим') +
+      return sheetHead('Смотреть как', 'Профили семьи') +
         '<div class="role-list">' + roles.map(function (r) {
           var active = state.role === r.id;
           return '<button class="role-row ' + (active ? 'is-active' : '') + '" type="button" data-action="switch-role" data-role="' + r.id + '">' +
@@ -1529,8 +1509,8 @@
       return sheetHead('Уведомления') +
         '<div class="notif-list">' +
           notifRow('sparkles', 'red', 'Подсказка для Маши', 'Пора настроить лимит на онлайн-покупки', 'сейчас') +
-          notifRow('flame', 'blue', 'Серия накоплений', '12 дней подряд — ставка выросла на 0,5%', '1 ч назад') +
-          notifRow('shield', 'green', 'Алекс прошёл миссию', '«Стоп, дроппер!» — +15 баллов Moby', 'вчера') +
+          notifRow('chart', 'blue', 'Цель «Наушники»', 'Маша пополнила копилку на 10 BYN', '1 ч назад') +
+          notifRow('shield', 'green', 'Алекс прошёл миссию', '«Стоп, дроппер!» — миссия выполнена', 'вчера') +
         '</div>' +
         '<button class="btn btn--soft btn--block btn--sm" type="button" data-action="navigate" data-to="missions">К миссиям</button>';
     }
@@ -1546,7 +1526,7 @@
           '<h3>Инверсия контроля</h3><p>Банк сам подсказывает родителю, когда пора расширить самостоятельность: на основе возраста, лимитов и исследований PISA. Это не надзор, а следующий шаг.</p>' +
           '<h3>Экономика</h3><p>2,99 BYN в месяц. Второй ребёнок — 50%, третий и многодетные — бесплатно. Пакет бесплатен при выполнении 2 из 3 условий. Ценность — взрослый клиент в 18 лет с нулевой стоимостью привлечения.</p>' +
         '</div>' +
-        '<button class="btn btn--red btn--block btn--sm" type="button" data-action="close-sheet">Продолжить демо</button>';
+        '<button class="btn btn--red btn--block btn--sm" type="button" data-action="close-sheet">Продолжить</button>';
     }
 
     if (type === 'legal') {
@@ -1556,7 +1536,7 @@
           legalRow('14–17 лет', 'Собственный счёт подростка', 'Ст. 25 ГК РБ в редакции с 19.11.2024. Базовые условия без обязательного согласия родителя на каждый шаг.') +
           legalRow('18 лет', 'Переход во взрослый счёт', 'Автоматически внутри Moby, без визита в банк и повторной идентификации.') +
         '</div>' +
-        '<p class="sheet__note">Демо-прототип. Юридические формулировки упрощены для презентации; продакшн-версия требует согласования с юридическим департаментом МТБанка.</p>';
+        '<p class="sheet__note">Юридические формулировки упрощены для презентации; продуктовая версия требует согласования с юридическим департаментом МТБанка.</p>';
     }
 
     if (type === 'install') {
@@ -1568,24 +1548,75 @@
           '<li><b>Готово</b><span>Moby Family откроется как обычное приложение и будет работать офлайн.</span></li>' +
         '</ol>' +
         '<button class="btn btn--red btn--block" type="button" data-action="install-native">' + icon('install', 17) + 'Попробовать установить</button>' +
-        (!window.isSecureContext ? '<p class="sheet__note">' + icon('info', 14) + 'Установка PWA требует HTTPS. По локальной сети демо работает в браузере без установки. Опубликуйте его на GitHub Pages — и кнопка заработает.</p>' : '') +
-        '<p class="sheet__note">Если кнопка недоступна — браузер не поддерживает установку. Демо всё равно работает по ссылке.</p>';
+        (!window.isSecureContext ? '<p class="sheet__note">' + icon('info', 14) + 'Установка PWA требует HTTPS. По локальной сети приложение работает в браузере без установки. Опубликуйте его на GitHub Pages — и кнопка заработает.</p>' : '') +
+        '<p class="sheet__note">Если кнопка недоступна — браузер не поддерживает установку. Приложение всё равно работает по ссылке.</p>';
     }
 
     if (type === 'topup') {
       var childId = data.child || ui.topupChild || 'masha';
       var pocket = data.pocket || ui.topupPocket || 'spend';
       var child = childFor(childId);
-      return sheetHead('Пополнить', 'Семейный счёт · ' + fmt(D.family.balance) + ' BYN') +
+      var fromOwnCard = child.id === 'alex';
+      var sourceTitle = fromOwnCard ? 'Карта Алекса · ' + fmt(child.balance) + ' BYN' : 'Семейный счёт · ' + fmt(D.family.balance) + ' BYN';
+      var sourceLabel = fromOwnCard ? 'Списать с карты Алекса' : 'Списать с семейного счёта';
+      var sourceValue = fromOwnCard ? 'Moby Card •••• 4417' : D.family.accountMask;
+      return sheetHead('Пополнить', sourceTitle) +
         '<div class="sheet-child">' + avatar(child.avatar, 44) + '<div><b>' + child.name + ', ' + child.age + '</b><span>' + (pocket === 'save' ? 'В банку «Коплю»' : 'В банку «Трачу»') + '</span></div>' + stageBadge(child) + '</div>' +
         '<div class="amount-chips">' +
           [10, 20, 50, 100].map(function (n) {
             return '<button class="amount-chip ' + (n === 20 ? 'is-selected' : '') + '" type="button" data-action="select-amount" data-amount="' + n + '">' + n + ' <small>BYN</small></button>';
           }).join('') +
         '</div>' +
-        '<div class="sheet-row"><span>Списать с семейного счёта</span><b>' + D.family.accountMask + '</b></div>' +
+        '<div class="sheet-row"><span>' + sourceLabel + '</span><b>' + sourceValue + '</b></div>' +
         '<button class="btn btn--red btn--block" type="button" data-action="topup-confirm" data-child="' + child.id + '" data-pocket="' + pocket + '">Пополнить на <span data-amount-label>20 BYN</span></button>' +
-        '<p class="sheet__note">В демо деньги не списываются. В продукте пополнение проходит внутри Moby за пару секунд.</p>';
+        '<p class="sheet__note">' + (fromOwnCard ? 'Пополнение пройдёт с карты Алекса.' : 'Пополнение проходит внутри Moby за пару секунд.') + '</p>';
+    }
+
+    if (type === 'history') {
+      var historyRows = D.transactions.family || [];
+      return sheetHead('История операций', 'Семья Соколовых') +
+        '<div class="tx-card">' + historyRows.map(txRow).join('') + '</div>' +
+        '<p class="sheet__note">Операции обновляются в реальном времени. В продукте история хранится за всё время.</p>';
+    }
+
+    if (type === 'assign-missions') {
+      var assignId = ui.assignChild || 'masha';
+      var assignChild = childFor(assignId);
+      var assigned = state.assignedMissions[assignId] || [];
+      return sheetHead('Добавить миссии', 'Задания для ' + assignChild.name) +
+        '<div class="assign-child-toggle">' +
+          ['masha', 'alex'].map(function (id) {
+            return '<button class="' + (assignId === id ? 'is-active' : '') + '" type="button" data-action="assign-child" data-child="' + id + '">' + avatar(id, 24) + childFor(id).name + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="assign-list">' + D.missions.map(function (mission) {
+          var has = assigned.indexOf(mission.id) !== -1;
+          return '<button class="assign-row ' + (has ? 'is-assigned' : '') + '" type="button" data-action="assign-mission" data-child="' + assignId + '" data-mission="' + mission.id + '">' +
+            '<span class="assign-row__icon">' + icon(mission.icon, 19) + '</span>' +
+            '<span class="assign-row__body"><b>' + esc(mission.title) + '</b><span>' + esc(mission.category) + ' · ' + mission.duration + ' мин</span></span>' +
+            '<span class="assign-row__state">' + (has ? icon('check', 13) + 'Назначено' : icon('plus', 13) + 'Назначить') + '</span>' +
+            '</button>';
+        }).join('') + '</div>' +
+        '<p class="sheet__note">Задание появится у ребёнка в разделе «Задания от родителя».</p>';
+    }
+
+    if (type === 'moby-missions' || type === 'parent-missions') {
+      var sheetChildId = data.child || (state.role !== 'parent' ? state.role : state.activeChild) || 'masha';
+      var sheetChild = childFor(sheetChildId);
+      var sheetDone = state.missionsDone[sheetChildId] || [];
+      var sheetMissions;
+      if (type === 'parent-missions') {
+        var parentIds = state.assignedMissions[sheetChildId] || [];
+        sheetMissions = parentIds.map(function (id) { return D.missionsById[id]; }).filter(Boolean);
+      } else {
+        sheetMissions = D.missions.slice();
+      }
+      return sheetHead(type === 'parent-missions' ? 'Задания от родителя' : 'Задания от Moby', sheetChild.name) +
+        (sheetMissions.length ?
+          '<div class="mission-sheet-list">' + sheetMissions.map(function (mission) {
+            return missionSheetRow(mission, sheetChildId, sheetDone.indexOf(mission.id) !== -1);
+          }).join('') + '</div>' :
+          '<div class="missions-empty">' + icon('sparkles', 22) + '<b>Пока нет заданий</b><span>Родитель может добавить их в разделе «Семья».</span></div>');
     }
 
     if (type === 'transfer') {
@@ -1628,7 +1659,7 @@
         '<p class="invite-hint">Ребёнок скачает Moby и войдёт по приглашению. ПИН-код и биометрия защищают вход, отдельное приложение не нужно.</p>' +
         '<div class="link-box"><span>' + esc(MF.prettyUrl(urls.invite)) + '</span><button class="mini-icon" type="button" data-action="copy-link" data-url="' + esc(urls.invite) + '" aria-label="Скопировать ссылку">' + icon('copy', 16) + '</button></div>' +
         '<button class="btn btn--soft btn--block btn--sm" type="button" data-action="share-link" data-url="' + esc(urls.invite) + '">' + icon('share', 16) + 'Поделиться приглашением</button>' +
-        '<p class="sheet__note">В демо ссылка открывает экран принятия приглашения.</p>';
+        '<p class="sheet__note">Ссылка открывает экран принятия приглашения.</p>';
     }
 
     if (type === 'member') {
@@ -1646,8 +1677,8 @@
     }
 
     if (type === 'reset') {
-      return sheetHead('Сбросить демо?', 'Данные прототипа') +
-        '<p class="sheet__text">Вернутся исходные балансы, лимиты, серии и экран приветствия. Это удобно перед новым показом.</p>' +
+      return sheetHead('Сбросить данные?', 'Исходное состояние') +
+        '<p class="sheet__text">Вернутся исходные балансы, лимиты и экран приветствия. Это удобно перед новым показом.</p>' +
         '<div class="sheet-actions"><button class="btn btn--soft" type="button" data-action="close-sheet">Отмена</button><button class="btn btn--red" type="button" data-action="confirm-reset">Сбросить</button></div>';
     }
 
@@ -1746,7 +1777,7 @@
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(window.location.protocol)) return;
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('./service-worker.js').catch(function () { /* demo-safe */ });
+      navigator.serviceWorker.register('./service-worker.js').catch(function () { /* no-op */ });
     });
   }
 
@@ -1814,9 +1845,6 @@
         case 'open-gift':
           openGift(ds.child || 'masha');
           break;
-        case 'freeze-streak':
-          freezeStreak(ds.child || 'masha');
-          break;
         case 'pocket-info':
           openSheet('pocket', { pocket: ds.pocket || 'spend', child: ds.child || state.activeChild });
           break;
@@ -1869,10 +1897,24 @@
           window.open(MF.appBase(), '_blank', 'noopener');
           break;
         case 'open-sheet':
-          openSheet(ds.sheet || 'about');
+          openSheet(ds.sheet || 'about', { child: ds.child });
           break;
-        case 'demo-info':
-          toast('«' + (ds.title || 'Раздел') + '» — в демо недоступно', { icon: 'info', tone: 'info' });
+        case 'assign-child':
+          ui.assignChild = ds.child === 'alex' ? 'alex' : 'masha';
+          openSheet('assign-missions');
+          break;
+        case 'assign-mission':
+          var assignTo = ds.child === 'alex' ? 'alex' : 'masha';
+          state.assignedMissions[assignTo] = state.assignedMissions[assignTo] || [];
+          if (state.assignedMissions[assignTo].indexOf(ds.mission) === -1) {
+            state.assignedMissions[assignTo].push(ds.mission);
+            saveState();
+            toast('Миссия назначена ' + childFor(assignTo).name, { icon: 'check' });
+          }
+          openSheet('assign-missions');
+          break;
+        case 'feature-info':
+          toast('«' + (ds.title || 'Раздел') + '» появится в приложении', { icon: 'info', tone: 'info' });
           break;
         case 'close-sheet':
           closeSheet();
@@ -1895,7 +1937,7 @@
           break;
         case 'transfer-confirm':
           closeSheet();
-          toast('Перевод отправлен. Демо: деньги не списаны', { icon: 'send' });
+          toast('Перевод отправлен. Деньги не списаны', { icon: 'send' });
           break;
         case 'toggle-rule':
           toggleRule(trigger);
@@ -1904,11 +1946,11 @@
           saveLimits(trigger);
           break;
         case 'request-limit':
-          toast('Запрос отправлен маме. Демо: без реального уведомления', { icon: 'send' });
+          toast('Запрос отправлен маме. Без реального уведомления', { icon: 'send' });
           break;
         case 'order-carrier':
-          if (ds.type === 'pin') toast('ПИН-код можно изменить в Moby. Демо-режим', { icon: 'lock' });
-          else toast('Заявка на выпуск отправлена. Демо: без доставки', { icon: 'check' });
+          if (ds.type === 'pin') toast('ПИН-код можно изменить в Moby', { icon: 'lock' });
+          else toast('Заявка на выпуск отправлена', { icon: 'check' });
           break;
         case 'set-age':
           setAge(Number(ds.age));
@@ -1988,17 +2030,6 @@
     navigate('limits', state.activeChild);
   }
 
-  function freezeStreak(childId) {
-    if (!state.freezes[childId]) {
-      toast('Заморозка уже использована в этом квартале', { icon: 'snowflake', tone: 'info' });
-      return;
-    }
-    state.freezes[childId] = 0;
-    saveState();
-    render(false);
-    toast('Серия защищена. Заморозка спишет 1 пропуск', { icon: 'snowflake' });
-  }
-
   function selectAmount(button) {
     var wrap = button.parentElement;
     $$('.amount-chip', wrap).forEach(function (c) { c.classList.remove('is-selected'); });
@@ -2012,7 +2043,7 @@
     var amount = amountEl ? amountEl.dataset.amount : '20';
     var person = childFor(childId);
     closeSheet();
-    toast(person.name + (person.id === 'masha' ? ' получила +' : ' получил +') + amount + ' BYN в банку «' + (pocket === 'save' ? 'Коплю' : 'Трачу') + '». Демо.', { icon: 'check' });
+    toast(person.name + (person.id === 'masha' ? ' получила +' : ' получил +') + amount + ' BYN в банку «' + (pocket === 'save' ? 'Коплю' : 'Трачу') + '»' + (person.id === 'alex' ? ' с карты Алекса' : '') + '.', { icon: 'check' });
   }
 
   function toggleRule(button) {
@@ -2046,7 +2077,7 @@
 
   function shareLink(url, trigger) {
     if (navigator.share) {
-      navigator.share({ title: 'Moby Family', text: 'Демо семейного банкинга МТБанка', url: url }).catch(function () { /* cancelled */ });
+      navigator.share({ title: 'Moby Family', text: 'Семейный банкинг МТБанка', url: url }).catch(function () { /* cancelled */ });
     } else {
       MF.copyText(url).then(function () {
         toast('Ссылка скопирована', { icon: 'copy' });
@@ -2071,7 +2102,7 @@
       history.replaceState(null, '', url.pathname);
     } catch (err) { /* no-op */ }
     render();
-    toast('Демо сброшено', { icon: 'refresh' });
+    toast('Данные сброшены', { icon: 'refresh' });
   }
 
   /* ------------------------------------------------------------------ */
@@ -2136,7 +2167,7 @@
     var child = childFor(ui.giftChild);
     if (ui.giftSent) {
       return '<section class="gift-page gift-page--success">' +
-        '<header class="gift-top"><div class="brand brand--light"><img class="brand__mark" src="assets/icons/icon.svg" alt=""><span class="brand__word">moby</span><span class="brand__family">family</span></div><span class="demo-pill"><i></i>demo</span></header>' +
+        '<header class="gift-top"><div class="brand brand--light"><img class="brand__mark" src="assets/icons/icon.svg" alt=""><span class="brand__word">moby</span><span class="brand__family">family</span></div></header>' +
         '<div class="gift-success">' +
           '<div class="success-ring">' + icon('check', 40) + '<span></span><span></span></div>' +
           '<span class="gift-success__eyebrow">Подарок доставлен</span>' +
@@ -2149,7 +2180,7 @@
           '</div>' +
           '<button class="btn btn--red btn--block" type="button" data-action="gift-again">Подарить ещё</button>' +
           '<button class="text-btn" type="button" data-action="gift-open-app" data-role="masha">Посмотреть глазами Маши ' + icon('arrow-right', 14) + '</button>' +
-          '<p class="gift-legal">Демо-режим. Деньги не списываются, но сценарий — настоящий.</p>' +
+          '<p class="gift-legal">Деньги не списываются.</p>' +
         '</div>' +
         '</section>';
     }
@@ -2185,7 +2216,7 @@
         '<button class="btn btn--red btn--block gift-send" type="button" data-action="gift-send">' +
           '<span class="gift-send__icon">' + icon('gift', 18) + '</span><span>Подарить <b id="giftSendAmount">' + fmtInt(ui.giftAmount) + ' BYN</b></span>' +
         '</button>' +
-        '<p class="gift-legal">Платёж проведёт МТБанк. Это PWA-демо: реальные деньги не списываются.</p>' +
+        '<p class="gift-legal">Платёж проведёт МТБанк. Реальные деньги не списываются.</p>' +
         '<button class="gift-back" type="button" data-action="gift-open-app" data-role="' + ui.giftChild + '">' + icon('arrow-right', 14) + 'Открыть Moby Family</button>' +
       '</div>' +
       '</section>';
@@ -2224,13 +2255,11 @@
             '<h1>' + (already ? 'Миссия пройдена' : 'Отлично!') + '</h1>' +
             '<p>' + esc(mission.result) + '</p>' +
           '</div>' +
-          '<div class="mission-rewards">' +
-            '<div><span>+' + mission.points + '</span><b>баллов Moby</b></div>' +
-            '<div><span>+1</span><b>день серии</b></div>' +
-            '<div><span>' + (doneCount(child)) + '</span><b>миссий у ' + child.name + '</b></div>' +
+          '<div class="mission-rewards mission-rewards--simple">' +
+            '<div><span>1</span><b>миссия выполнена</b></div>' +
+            '<div><span>' + (doneCount(child)) + '</span><b>всего у ' + genitiveName(child.name) + '</b></div>' +
           '</div>' +
-          '<button class="btn btn--red btn--block" type="button" data-action="mission-finish">Забрать награду</button>' +
-          '<p class="mission-done__legal">Демо-награда. В продукте баллы обмениваются на бонусы МТБанка.</p>' +
+          '<button class="btn btn--red btn--block" type="button" data-action="mission-finish">Готово</button>' +
         '</div></div>';
       confetti();
       return;
@@ -2251,7 +2280,6 @@
         '<div class="mission-top">' +
           '<button class="icon-btn icon-btn--glass" type="button" data-action="mission-close" aria-label="Закрыть">' + icon('close', 20) + '</button>' +
           '<div class="mission-top__center"><span>Миссия</span><b>' + child.name + ' · ' + child.age + '</b></div>' +
-          '<span class="mission-top__points">' + icon('sparkles', 14) + '+' + mission.points + '</span>' +
         '</div>' +
         '<div class="mission-progress"><span style="width:' + progress + '%"></span></div>' +
         '<div class="mission-body">' +
@@ -2303,8 +2331,6 @@
     var isNew = state.missionsDone[m.childId].indexOf(mission.id) === -1;
     if (isNew) {
       state.missionsDone[m.childId].push(mission.id);
-      state.points[m.childId] = (state.points[m.childId] || 0) + mission.points;
-      m.gained = mission.points;
     }
     saveState();
     m.finished = true;
@@ -2315,7 +2341,7 @@
     ui.mission = null;
     sheetRoot.innerHTML = '';
     render(false);
-    toast('Награда зачислена. Серия стала длиннее!', { icon: 'trophy' });
+    toast('Миссия выполнена', { icon: 'check' });
   }
 
   function closeMission() {
