@@ -712,7 +712,7 @@
           '<div class="v2-balance__label">' + (isTeen ? 'Мой счёт' : 'Твои деньги') + '</div>' +
           '<div class="v2-balance__amount"><span>' + fmt(person.balance) + '</span><small>BYN</small></div>' +
         '</div>' +
-        (isTeen ? '<button class="teen-request" type="button" disabled aria-disabled="true">' + icon('send', 16) + 'Запрос</button>' : '') +
+        '<button class="teen-request" type="button" disabled aria-disabled="true">' + icon('send', 16) + 'Запрос</button>' +
       '</header>' +
       '<div class="content">' +
         '<section class="section">' +

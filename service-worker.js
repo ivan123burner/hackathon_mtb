@@ -1,7 +1,7 @@
 /* Moby Family service worker: network-first with an offline cache. */
 'use strict';
 
-const CACHE = 'moby-family-v1.6.0';
+const CACHE = 'moby-family-v1.6.1';
 const CORE = [
   './',
   './index.html',
